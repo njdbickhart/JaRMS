@@ -17,6 +17,7 @@ public class WindowPlan {
     // diagram: chromosome -> ordered list of start coords
     private final Map<String, Integer[]> starts = new ConcurrentHashMap<>();
     private final Map<String, Integer[]> ends = new ConcurrentHashMap<>();
+    private int windowSize;
     
     public void GenerateWindows(BamMetadataSampler bam){
         // For now, I'm going to pretend that there is no difference among sex chromosomes
@@ -27,7 +28,7 @@ public class WindowPlan {
                 .getAsDouble();
         
         // TODO: Make window size more dynamic dependent on read length and coverage
-        int windowSize = 0;
+        windowSize = 0;
         if(fullXCov < 6.0d){
             windowSize = 500;
         }else{
@@ -63,5 +64,11 @@ public class WindowPlan {
     }
     public Integer[] getEnds(String chr){
         return this.ends.get(chr);
+    }
+    public int getWindowSize(){
+        return this.windowSize;
+    }
+    public boolean containsChr(String chr){
+        return this.starts.containsKey(chr);
     }
 }
