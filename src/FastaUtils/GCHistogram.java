@@ -53,11 +53,7 @@ public class GCHistogram extends TempHistogram<Double>{
         }
         
         // Clear the list
-        this.start.clear();
-        this.end.clear();
-        this.score.clear();
-        
-        System.gc();
+        this.clearData();
     }
     
     public void transferFromProfile(RandomAccessFile profile, int numBins){
@@ -160,5 +156,14 @@ public class GCHistogram extends TempHistogram<Double>{
         BigDecimal bd = new BigDecimal(value);
         bd = bd.setScale(places, RoundingMode.HALF_UP);
         return bd.doubleValue();
+    }
+    
+    @Override
+    public void clearData() {
+        this.start.clear();
+        this.end.clear();
+        this.score.clear();
+        
+        System.gc();
     }
 }

@@ -69,6 +69,8 @@ public abstract class TempHistogram <T extends Object>{
     
     public abstract void readTemp();
     
+    public abstract void clearData();
+    
     public int iterateAdvance(){
         this.curIdx++;
         if(this.curIdx == this.numEntries){
@@ -112,6 +114,10 @@ public abstract class TempHistogram <T extends Object>{
     
     public String getChr(){
         return this.chr;
+    }
+    
+    public int getNumEntries(){
+        return this.numEntries;
     }
     
     /*

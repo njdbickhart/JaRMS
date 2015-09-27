@@ -58,11 +58,7 @@ public class ChrHistogram extends TempHistogram<Double>{
         }
         
         // Clear the list
-        this.start.clear();
-        this.end.clear();
-        this.score.clear();
-        
-        System.gc();
+        this.clearData();
     }
 
     @Override
@@ -85,6 +81,15 @@ public class ChrHistogram extends TempHistogram<Double>{
         }catch(Exception ex){
             log.log(Level.SEVERE, "Error reading from ChrHistogram temp file for chr: " + this.chr, ex);
         }
+    }
+
+    @Override
+    public void clearData() {
+        this.start.clear();
+        this.end.clear();
+        this.score.clear();
+        
+        System.gc();
     }
     
 }

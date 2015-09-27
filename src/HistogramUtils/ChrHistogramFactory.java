@@ -62,6 +62,7 @@ public class ChrHistogramFactory {
                 histograms.put(chr, new ChrHistogram(chr, tmp));
             }
             
+            // TODO: Add in better logic for removing supplementary alignments and/or low MQ reads
             int mid = (s.getAlignmentEnd() + s.getAlignmentStart()) / 2;
             if(mid > ends[curItr]){
                 histograms.get(chr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
@@ -84,7 +85,14 @@ public class ChrHistogramFactory {
             histograms.get(prevChr).addHistogram(prevChr, starts[curItr], ends[curItr], (double) count);
             histograms.get(prevChr).writeToTemp();
         }
-    }  
+    }
+    
+    public void addHistogramData(Path tmpDir, String chr, int start, int end, double score){
+        if(!this.histograms.containsKey(chr)){
+            this.histograms.put(chr, new ChrHistogram(chr, tmpDir));
+        }
+        this.histograms.get(chr).addHistogram(chr, start, end, score);
+    }
     
     public ChrHistogram getChrHistogram(String chr){
         return this.histograms.get(chr);

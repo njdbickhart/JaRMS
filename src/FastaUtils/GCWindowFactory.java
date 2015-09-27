@@ -175,4 +175,8 @@ public class GCWindowFactory {
             log.log(Level.SEVERE, "Error writing out GC profile for fasta file: " + this.fastaPath.toString(), ex);
         }
     }
+    
+    public GCHistogram getGCHistogram(String chr){
+        return this.histograms.get(chr);
+    }
 }
