@@ -17,6 +17,7 @@ public class WindowPlan {
     // diagram: chromosome -> ordered list of start coords
     private final Map<String, Integer[]> starts = new ConcurrentHashMap<>();
     private final Map<String, Integer[]> ends = new ConcurrentHashMap<>();
+    private final Map<String, Integer> numBins = new ConcurrentHashMap<>();
     private int windowSize;
     
     public void GenerateWindows(BamMetadataSampler bam){
@@ -36,6 +37,7 @@ public class WindowPlan {
         }
         
         for(String chr : bam.chrOrder){
+            int numBins = 0;
             int chrlen = bam.chrLens.get(chr);
             int numIdx = (int) Math.ceil(chrlen / (double) windowSize);
             
@@ -52,10 +54,29 @@ public class WindowPlan {
                     end[x] = checkEnd;
                 }
                 prevEnd += windowSize; 
+                numBins++;
             }
             
             starts.put(chr, start);
             ends.put(chr, end);
+            numBins++;
+            
+            this.numBins.put(chr, numBins);
+        }
+    }
+    
+    public int getBinStart(String chr, int binNum) throws Exception{
+        if(this.numBins.get(chr) > binNum){
+            return this.starts.get(chr)[binNum];
+        }else{
+            throw new Exception("Error! Attempted to retrieve start coordinate outside of bounds! binnum: " + binNum + " Max bin: " + this.numBins.get(chr));
+        }
+    }
+    public int getBinEnd(String chr, int binNum) throws Exception{
+        if(this.numBins.get(chr) > binNum){
+            return this.ends.get(chr)[binNum];
+        }else{
+            throw new Exception("Error! Attempted to retrieve end coordinate outside of bounds! binnum: " + binNum + " Max bin: " + this.numBins.get(chr));
         }
     }
     

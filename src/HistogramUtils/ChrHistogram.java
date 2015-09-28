@@ -82,6 +82,28 @@ public class ChrHistogram extends TempHistogram<Double>{
             log.log(Level.SEVERE, "Error reading from ChrHistogram temp file for chr: " + this.chr, ex);
         }
     }
+    
+    public double[] retrieveRDBins(){
+        double[] bins = new double[this.numEntries];
+        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+            if(this.numEntries <= 0)
+                throw new Exception ("Reading empty temp file!");
+            byte[] ints = new byte[4];
+            byte[] dbls = new byte[8];
+            for(int x = 0; x < super.numEntries; x++){
+                rand.read(ints);
+                
+                rand.read(ints);
+                
+                rand.read(dbls);
+                bins[x] = DoubleUtils.BytetoDouble(dbls);
+            }
+        }catch(Exception ex){
+            log.log(Level.SEVERE, "Error reading bins from ChrHistogram temp file for chr: " + this.chr, ex);
+        }
+        
+        return bins;
+    }
 
     @Override
     public void clearData() {

@@ -5,6 +5,7 @@
  */
 package SVCaller;
 
+import DataUtils.WindowPlan;
 import FastaUtils.GCWindowFactory;
 import HistogramUtils.ChrHistogramFactory;
 
@@ -14,7 +15,9 @@ import HistogramUtils.ChrHistogramFactory;
  */
 public class MeanShiftMethod {
     
-    public void Partition(ChrHistogramFactory chisto, GCWindowFactory gchisto){
+    public void Partition(ChrHistogramFactory chisto, GCWindowFactory gchisto, WindowPlan wins){
         
     }
+    
+    
 }
