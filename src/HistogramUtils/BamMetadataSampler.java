@@ -9,17 +9,13 @@ import htsjdk.samtools.BAMIndex;
 import htsjdk.samtools.BAMIndexMetaData;
 import htsjdk.samtools.DefaultSAMRecordFactory;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**

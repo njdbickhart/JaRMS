@@ -22,7 +22,16 @@ public class StdevAvg {
         }
         return s / (double) sum.size();
     } 
-    
+    public static double DoubleAvg(double[] sum){
+        if(sum.length == 0){
+            return 0.0d;
+        }
+        double s = 0.0d;
+        for(int x = 0; x < sum.length; x++){
+            s += sum[x];
+        }
+        return s / sum.length;
+    }
     public static double DoubleAvg(List<Double> sum){
         if(sum.isEmpty()){
             return 0.0d;
@@ -102,5 +111,46 @@ public class StdevAvg {
         }
         double variance = dev / (double) (sum.size() - 1);
         return Math.sqrt(variance);
+    }
+    
+    public static double stdevDBL(double avg, double[] sum){
+        if(sum.length <= 1){
+            return 0;
+        }        
+        double dev = 0.0d;
+        for(double d : sum){
+            dev += (double) Math.pow(d - avg, 2.0d);
+        }
+        double variance = dev / (double) (sum.length - 1);
+        return Math.sqrt(variance);
+    }
+    
+    public static double getRangeAverage(double[] values, int start, int end){
+        // End index inclusive
+        int len = end - start;
+        if(len <= 0 || values.length == 0)
+            return 0.0d;
+        
+        double sum = 0.0d;
+        for(int i = start; i <= end; i++){
+            sum += values[i];
+        }
+        return sum / len;
+    }
+    
+    public static double getRangeVariance(double[] values, double average, int start, int end){
+        // End index inclusive
+        int len = end - start;
+        if(len <= 0 || values.length == 0)
+            return 0.0d;
+        
+        double ss = 0.0d;
+        for(int i = start; i <= end; i++){
+            ss += values[i] * values[i];
+        }
+        
+        double invLen = 1.0d / len;
+        
+        return ss * invLen - average * average;
     }
 }

@@ -7,6 +7,7 @@ package DataUtils;
 
 import HistogramUtils.BamMetadataSampler;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -19,8 +20,12 @@ public class WindowPlan {
     private final Map<String, Integer[]> ends = new ConcurrentHashMap<>();
     private final Map<String, Integer> numBins = new ConcurrentHashMap<>();
     private int windowSize;
+    private int GenomeSize;
     
     public void GenerateWindows(BamMetadataSampler bam){
+        this.GenomeSize = bam.chrLens.values().stream()
+                .reduce(0, (a, b) -> a + b);
+        
         // For now, I'm going to pretend that there is no difference among sex chromosomes
         // TODO: Implement sex-specific chromosome counts
         double fullXCov = bam.chrXCov.values().stream()
@@ -88,6 +93,12 @@ public class WindowPlan {
     }
     public int getWindowSize(){
         return this.windowSize;
+    }
+    public int getGenomeSize(){
+        return this.GenomeSize;
+    }
+    public Set<String> getChrList(){
+        return this.starts.keySet();
     }
     public boolean containsChr(String chr){
         return this.starts.containsKey(chr);
