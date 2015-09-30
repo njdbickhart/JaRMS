@@ -8,6 +8,7 @@ package SVCaller;
 import DataUtils.WindowPlan;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;
+import HistogramUtils.LevelHistogram;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,27 +35,27 @@ public class MeanShiftMethod {
     public void Partition(ChrHistogramFactory chisto, WindowPlan wins, Path tmpDir, int range, int threads){
         TDistributionFunction ttest = new TDistributionFunction(wins.getWindowSize());
         ExecutorService executor = Executors.newFixedThreadPool(threads);
-        List<Future<ChrHistogram>> workers = new ArrayList<>();
-        for(String chr : wins.getChrList()){
+        final List<Future<LevelHistogram>> workers = new ArrayList<>();
+        wins.getChrList().stream().forEach((chr) -> {
             workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
-        }
+        });
         
         executor.shutdown();
         while(!executor.isTerminated()){
             
         }
         
-        for(Future<ChrHistogram> chrHisto : workers){
+        workers.stream().forEach((chrHisto) -> {
             try {
-                ChrHistogram c = chrHisto.get();
+                LevelHistogram c = chrHisto.get();
                 this.shiftedChrHistos.put(c.getChr(), c);
             } catch (InterruptedException | ExecutionException ex) {
                 Logger.getLogger(MeanShiftMethod.class.getName()).log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
             }
-        }
+        });
     }
     
-    private class MeanShifter implements Callable<ChrHistogram>{
+    private class MeanShifter implements Callable<LevelHistogram>{
         private final Logger log = Logger.getLogger(MeanShifter.class.getName());
         
         private final WindowPlan wins;
@@ -81,8 +82,8 @@ public class MeanShiftMethod {
         }
         
         @Override
-        public ChrHistogram call() throws Exception {
-            ChrHistogram shifted = new ChrHistogram(this.chr, this.tmpDir);
+        public LevelHistogram call() throws Exception {
+            LevelHistogram shifted = new LevelHistogram(this.chr, this.tmpDir);
             boolean[] mask = new boolean[this.rdBins.length];
             for(int i = 0; i < rdBins.length; i++)
                 mask[i] = false;
@@ -163,7 +164,6 @@ public class MeanShiftMethod {
                 if (ln <= 15 || n <= 15 || rn <= 15) {
                     // Check sigma condition
                     double ns = 1.8;
-                    //double ns = 2.0;
                     double nsigma = ns * Math.sqrt(level[leftRange.stop] * inv_mean) * sigma;
                     if (Math.abs(level[leftRange.stop] - level[curRange.start]) < nsigma) 
                         continue;
@@ -171,7 +171,7 @@ public class MeanShiftMethod {
                     if (Math.abs(level[rightRange.start] - level[curRange.stop]) < nsigma) 
                         continue;
                 } else {
-                    // Checking compartibility of regions
+                    // Checking if the two regions are compatible
                     if (ttest.TestTwoRegions(laverage,lvariance,ln,average,variance,n,
                                        wins.getGenomeSize()) > CUTOFF_TWO_REGIONS ||
                         ttest.TestTwoRegions(raverage,rvariance,rn,average,variance,n,

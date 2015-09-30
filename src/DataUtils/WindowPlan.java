@@ -41,8 +41,8 @@ public class WindowPlan {
             windowSize = 100;
         }
         
-        for(String chr : bam.chrOrder){
-            int numBins = 0;
+        bam.chrOrder.stream().forEach((chr) -> {
+            int binNums = 0;
             int chrlen = bam.chrLens.get(chr);
             int numIdx = (int) Math.ceil(chrlen / (double) windowSize);
             
@@ -59,15 +59,15 @@ public class WindowPlan {
                     end[x] = checkEnd;
                 }
                 prevEnd += windowSize; 
-                numBins++;
+                binNums++;
             }
             
             starts.put(chr, start);
             ends.put(chr, end);
-            numBins++;
+            binNums++;
             
-            this.numBins.put(chr, numBins);
-        }
+            this.numBins.put(chr, binNums);
+        });
     }
     
     public int getBinStart(String chr, int binNum) throws Exception{

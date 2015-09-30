@@ -34,7 +34,7 @@ public abstract class TempHistogram <T extends Object>{
         this.createTemp(tmpdir, chr);
     }
     
-    private void createTemp(Path path, String chr){
+    protected void createTemp(Path path, String chr){
         try {
             Random rand = new Random();
             path = path.resolve(chr + "." + rand.nextInt());
