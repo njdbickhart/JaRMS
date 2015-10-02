@@ -6,6 +6,7 @@
 package stats;
 
 import DataUtils.BinCoords;
+import org.apache.commons.math3.special.Erf;
 
 /**
  *
@@ -64,8 +65,28 @@ public class EvalueTools {
         return false;
     }
     
-    public static void GetGaussianEValue(){
-        
+    public static double GetGaussianEValue(double mean,double sigma,double rd[],
+				int start,int end, int GenomeSize){
+        // Calculate by deviation from gaussian
+        double max = 0,min = 1e+10,av = 0;
+        int n = end - start + 1;
+        for (int i = start;i <= end;i++) {
+          av += rd[i];
+          if (rd[i] > max) max = rd[i];
+          if (rd[i] < min) min = rd[i];
+        }
+
+        av /= n;
+
+        double p;
+        if (av < mean) {
+          double x = (max - mean)/sigma*0.707;
+          p = 0.5*(1 + Erf.erf(x));
+        } else {
+          double x = (min - mean)/sigma*0.707;
+          p = 0.5*(1 - Erf.erf(x));
+        }
+        return GenomeSize * Math.pow(p, n);
     }
     
     public static double GetEValue(double mean, double sd, int genomeSize, TDistributionFunction tdist, double[] rd, int start, int end){

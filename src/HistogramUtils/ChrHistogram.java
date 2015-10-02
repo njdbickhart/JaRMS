@@ -20,7 +20,7 @@ import java.util.logging.Logger;
  */
 public class ChrHistogram extends TempHistogram<Double>{
     private static final Logger log = Logger.getLogger(ChrHistogram.class.getName());
-    private boolean[] freeze;
+    private double sum = 0.0d;
     
     public ChrHistogram(String chr, Path tmpdir) {
         super(chr, tmpdir);
@@ -36,6 +36,7 @@ public class ChrHistogram extends TempHistogram<Double>{
         super.start.add(start);
         super.end.add(end);
         super.score.add(score);
+        this.sum += score;
         super.numEntries++;
     }
 
@@ -114,4 +115,35 @@ public class ChrHistogram extends TempHistogram<Double>{
         System.gc();
     }
     
+    
+    public double getMean(){
+        return this.sum / this.numEntries;
+    }
+    
+    public double getSum(){
+        return this.sum;
+    }
+    
+    public double getSumSquares(double mean){
+        double ss = 0.0d;
+        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+            if(this.numEntries <= 0)
+                throw new Exception ("Reading empty temp file!");
+            byte[] ints = new byte[4];
+            byte[] dbls = new byte[8];
+            for(int x = 0; x < super.numEntries; x++){
+                rand.read(ints);
+                
+                rand.read(ints);
+                
+                rand.read(dbls);
+                double value = DoubleUtils.BytetoDouble(dbls);
+                
+                ss += Math.pow(value - mean, 2.0d);
+            }
+        }catch(Exception ex){
+            log.log(Level.SEVERE, "Error reading bins from ChrHistogram temp file for chr: " + this.chr, ex);
+        }
+        return ss;
+    }
 }

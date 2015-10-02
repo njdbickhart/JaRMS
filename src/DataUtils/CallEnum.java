@@ -10,5 +10,5 @@ package DataUtils;
  * @author Derek.Bickhart
  */
 public enum CallEnum {
-    DUPLICATION, POTENTIALDUP, POTENTIALDEL, DELETION, NORMAL
+    DUPLICATION, POTENTIAL, DELETION, NORMAL, POTENTIALDEL
 }

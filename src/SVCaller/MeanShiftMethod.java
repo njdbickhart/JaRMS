@@ -30,7 +30,7 @@ import stats.TDistributionFunction;
  * @author desktop
  */
 public class MeanShiftMethod {
-    private final Map<String, ChrHistogram> shiftedChrHistos = new ConcurrentHashMap<>();
+    private final Map<String, LevelHistogram> shiftedChrHistos = new ConcurrentHashMap<>();
     
     public void Partition(ChrHistogramFactory chisto, WindowPlan wins, Path tmpDir, int range, int threads){
         TDistributionFunction ttest = new TDistributionFunction(wins.getWindowSize());
@@ -53,6 +53,10 @@ public class MeanShiftMethod {
                 Logger.getLogger(MeanShiftMethod.class.getName()).log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
             }
         });
+    }
+    
+    public LevelHistogram getChrLevels(String c){
+        return this.shiftedChrHistos.get(c);
     }
     
     private class MeanShifter implements Callable<LevelHistogram>{

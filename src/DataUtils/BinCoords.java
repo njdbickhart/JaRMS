@@ -12,4 +12,12 @@ package DataUtils;
 public class BinCoords {
     public int start = 0;
     public int end = 0;
+    
+    public boolean isNormalInterval(){
+        return this.end > this.start;
+    }
+    
+    public int getLength(){
+        return this.end - this.start;
+    }
 }
