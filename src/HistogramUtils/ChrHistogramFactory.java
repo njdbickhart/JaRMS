@@ -40,9 +40,12 @@ public class ChrHistogramFactory {
                 .open(BamPath.toFile());
         
         
+        AlignmentIteration(reader, wins, tmp);
+    }
+
+    private void AlignmentIteration(SamReader reader, WindowPlan wins, Path tmp) throws Exception {
         SAMRecord s; Integer[] starts = null; Integer[] ends = null;
         String prevChr = "NA"; int curItr = 0; int count = 0;
-        
         // Assuming BAM is sorted
         while((s = reader.iterator().next()) != null){
             String chr = s.getReferenceName();
@@ -79,7 +82,6 @@ public class ChrHistogramFactory {
             }
             count++;
         }
-        
         if(curItr > 0){
             // Add final data to histogram if we've already loaded some data previously
             histograms.get(prevChr).addHistogram(prevChr, starts[curItr], ends[curItr], (double) count);
