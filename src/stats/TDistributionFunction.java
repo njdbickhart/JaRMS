@@ -5,9 +5,10 @@
  */
 package stats;
 
-import com.sun.istack.internal.logging.Logger;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 import org.apache.commons.math3.distribution.TDistribution;
 
 /**
@@ -15,7 +16,7 @@ import org.apache.commons.math3.distribution.TDistribution;
  * @author desktop
  */
 public class TDistributionFunction {
-    private final Logger log = Logger.getLogger(TDistributionFunction.class);
+    private final Logger log = Logger.getLogger(TDistributionFunction.class.getName());
     
     private final Map<Integer, TDistribution> functions = new ConcurrentHashMap<>();
     private final int winsize;
