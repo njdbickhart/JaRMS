@@ -28,10 +28,10 @@ public class BamMetadataSampler {
     public Set<String> chrOrder;
     private final Path bamFile;
     
-    public BamMetadataSampler(String bamFile) throws Exception{
+    public BamMetadataSampler(String bamFile){
         this.bamFile = Paths.get(bamFile);
-        if(!this.bamFile.toFile().canRead())
-            throw new Exception("Error! Cannot find BAM file: " + bamFile);
+        //if(!this.bamFile.toFile().canRead())
+            //throw new Exception("Error! Cannot find BAM file: " + bamFile);
     }
     
     public void getMetaData(){

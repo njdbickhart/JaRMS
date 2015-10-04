@@ -38,6 +38,7 @@ import stats.TDistributionFunction;
  */
 public class SVSegmentation {
     private static final Logger log = Logger.getLogger(SVSegmentation.class.getName());
+    private List<BedStats> StoredCalls;
     
     private final Path outfile;
     //private final List<BedStats> CNVCalls = new ArrayList<>();
@@ -93,11 +94,12 @@ public class SVSegmentation {
         }
         
         Collections.sort(FinalCalls);
+        this.StoredCalls = FinalCalls;
     }
     
-    public void printOutAllCalls(List<BedStats> FinalCalls){
+    public void printOutAllCalls(){
         try(BufferedWriter out = Files.newBufferedWriter(outfile, Charset.defaultCharset())){
-            for(BedStats b : FinalCalls){
+            for(BedStats b : this.StoredCalls){
                 out.write(b.getOutputString());
             }
         }catch(IOException ex){
