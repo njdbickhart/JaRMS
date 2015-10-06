@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -37,7 +38,7 @@ public abstract class TempHistogram <T extends Object>{
     protected void createTemp(Path path, String chr){
         try {
             Random rand = new Random();
-            path = path.resolve(chr + "." + rand.nextInt());
+            path = Paths.get(path.toString() + "." + chr + "." + rand.nextInt());
             this.tempFile = Files.createTempFile(path.toString(), ".tmp");
             this.tempFile.toFile().deleteOnExit();
         } catch (IOException ex) {

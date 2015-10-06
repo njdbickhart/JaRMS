@@ -44,12 +44,12 @@ public class ChrHistogramFactory {
     }
 
     private void AlignmentIteration(SamReader reader, WindowPlan wins, Path tmp) throws Exception {
-        SAMRecord s; Integer[] starts = null; Integer[] ends = null;
-        String prevChr = "NA"; int curItr = 0; int count = 0;
+        Integer[] starts = null; Integer[] ends = null;
+        String prevChr = "NA"; int curItr = 0; int count = 0; boolean startL = false;
         // Assuming BAM is sorted
-        while((s = reader.iterator().next()) != null){
+        for(SAMRecord s : reader){
             String chr = s.getReferenceName();
-            if(!chr.equals(prevChr) && !chr.equals("NA")){                
+            if(!chr.equals(prevChr) && startL){                
                 // cleanup memory
                 histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
                 starts = wins.getStarts(chr);
@@ -58,11 +58,12 @@ public class ChrHistogramFactory {
                 prevChr = chr;
                 count = 0;
                 histograms.put(chr, new ChrHistogram(chr, tmp));
-            }else if(chr.equals("NA")){
+            }else if(!startL){
                 prevChr = chr;
                 starts = wins.getStarts(chr);
                 ends = wins.getEnds(chr);
                 histograms.put(chr, new ChrHistogram(chr, tmp));
+                startL = true;
             }
             
             // TODO: Add in better logic for removing supplementary alignments and/or low MQ reads

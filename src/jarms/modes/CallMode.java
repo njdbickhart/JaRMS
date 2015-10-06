@@ -91,7 +91,7 @@ public class CallMode {
         log.log(Level.INFO, "[CALLMODE] Unadjusted RD values: mean-> " + rawMean + " sd-> " +rawStdev);
         
         // Generate GC correction scheme
-        GCWindowFactory GCWins = new GCWindowFactory(this.fastaFile, System.getProperty("java.io.tmpdir"));
+        GCWindowFactory GCWins = new GCWindowFactory(this.fastaFile, this.outDir);
         GCWins.generateGCProfile(metadata, wins);
         
         // Create GC correction utility
@@ -99,11 +99,11 @@ public class CallMode {
         gccorrect.CalculationGCCorrectionValues(metadata, rawRDHisto, GCWins, rawMean);
         
         // Correct GC
-        ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(Paths.get(System.getProperty("java.io.tmpdir")), metadata, rawRDHisto, GCWins);
+        ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(Paths.get(this.outDir), metadata, rawRDHisto, GCWins);
         
         // Mean shift signal
         MeanShiftMethod shifter = new MeanShiftMethod();
-        shifter.Partition(rawRDHisto, wins, Paths.get(System.getProperty("java.io.tmpdir")), 128, threads);
+        shifter.Partition(rawRDHisto, wins, Paths.get(this.outDir), 128, threads);
         
         // Call SVs
         SVSegmentation svCaller = new SVSegmentation(this.outDir);
