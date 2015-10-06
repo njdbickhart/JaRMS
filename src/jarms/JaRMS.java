@@ -49,6 +49,7 @@ public class JaRMS {
                 log.log(Level.INFO, "[MAIN] JaRMS call mode selected.");
                 CallMode cluster = new CallMode(cmd);
                 cluster.run();
+                break;
             default:
                 System.err.println("Error! Must designate a usage mode!");
                 System.err.println(cmd.GetUsage());
@@ -95,7 +96,7 @@ public class JaRMS {
         ConsoleHandler console = null;
         String datestr = loggerDate();
         try {
-            handler = new FileHandler("RAPTR-SV." + type + "." + datestr + ".%u.%g.log");
+            handler = new FileHandler("JaRMS." + type + "." + datestr + ".%u.%g.log");
             handler.setFormatter(new LogFormat());
             console = new ConsoleHandler();
             console.setFormatter(new ConsoleFormat());
@@ -105,7 +106,7 @@ public class JaRMS {
                 console.setLevel(Level.INFO);
             }else{
                 handler.setLevel(Level.INFO);
-                console.setLevel(Level.WARNING);
+                console.setLevel(Level.INFO);
             }
         } catch (IOException | SecurityException ex) {
             log.log(Level.SEVERE, "Error setting up logger!", ex);

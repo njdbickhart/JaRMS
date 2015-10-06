@@ -146,11 +146,8 @@ public class StdevAvg {
         
         double ss = 0.0d;
         for(int i = start; i <= end; i++){
-            ss += values[i] * values[i];
-        }
-        
-        double invLen = 1.0d / len;
-        
-        return ss * invLen - average * average;
+            ss += Math.pow(values[i] - average, 2.0d);
+        }        
+        return ss / (end - start);
     }
 }

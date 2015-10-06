@@ -37,6 +37,9 @@ public class ChrHistogram extends TempHistogram<Double>{
         super.end.add(end);
         super.score.add(score);
         this.sum += score;
+        if(this.sum == Double.NaN){
+            System.err.println("Error with sum score!");
+        }
         super.numEntries++;
     }
 
@@ -145,5 +148,30 @@ public class ChrHistogram extends TempHistogram<Double>{
             log.log(Level.SEVERE, "Error reading bins from ChrHistogram temp file for chr: " + this.chr, ex);
         }
         return ss;
+    }
+    
+    public void recalculateSumScore(){
+        if(Double.isNaN(sum)){
+            try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+                if(this.numEntries <= 0)
+                    throw new Exception ("Reading empty temp file!");
+                byte[] ints = new byte[4];
+                byte[] dbls = new byte[8];
+                for(int x = 0; x < super.numEntries; x++){
+                    rand.read(ints);
+
+                    rand.read(ints);
+
+                    rand.read(dbls);
+                    double value = DoubleUtils.BytetoDouble(dbls);
+                    if(Double.isNaN(value)){
+                        value = 0.0d;
+                    }
+                    this.sum += value;
+                }
+            }catch(Exception ex){
+                log.log(Level.SEVERE, "Error reading bins from ChrHistogram temp file for chr: " + this.chr, ex);
+            }
+        }
     }
 }

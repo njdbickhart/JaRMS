@@ -5,6 +5,7 @@
  */
 package SVCaller;
 
+import DataUtils.BinCoords;
 import DataUtils.WindowPlan;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;
@@ -20,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import stats.StdevAvg;
@@ -30,29 +32,33 @@ import stats.TDistributionFunction;
  * @author desktop
  */
 public class MeanShiftMethod {
+    private static final Logger log = Logger.getLogger(MeanShiftMethod.class.getName());
     private final Map<String, LevelHistogram> shiftedChrHistos = new ConcurrentHashMap<>();
     
     public void Partition(ChrHistogramFactory chisto, WindowPlan wins, Path tmpDir, int range, int threads){
         TDistributionFunction ttest = new TDistributionFunction(wins.getWindowSize());
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         final List<Future<LevelHistogram>> workers = new ArrayList<>();
+        //wins.getChrList().stream().forEach((chr) -> {
+        //    workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
+        //});
+        
         wins.getChrList().stream().forEach((chr) -> {
-            workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
-        });
-        
-        executor.shutdown();
-        while(!executor.isTerminated()){
-            
-        }
-        
-        workers.stream().forEach((chrHisto) -> {
+        //workers.stream().forEach((chrHisto) -> {
             try {
-                LevelHistogram c = chrHisto.get();
+                MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range);
+                LevelHistogram c = shifter.call();
+                //LevelHistogram c = cHisto.get();
                 this.shiftedChrHistos.put(c.getChr(), c);
             } catch (InterruptedException | ExecutionException ex) {
-                Logger.getLogger(MeanShiftMethod.class.getName()).log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
+                log.log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, null, ex);
             }
         });
+        
+        //executor.shutdown();
+        //while(!executor.isTerminated()){}
     }
     
     public LevelHistogram getChrLevels(String c){
@@ -96,7 +102,7 @@ public class MeanShiftMethod {
             double mean = StdevAvg.DoubleAvg(rdBins);
             double sigma = StdevAvg.stdevDBL(mean, rdBins);
             
-            for (int bin_band = 2;bin_band <= range;bin_band++) {
+            for (int bin_band = 2; bin_band <= range; bin_band++) {
       
                 log.log(Level.INFO, "Setting bin band for chr: " + chr + " to: " + bin_band);
 
@@ -137,8 +143,9 @@ public class MeanShiftMethod {
             double laverage = 0, lvariance = 0;
             double raverage = 0, rvariance = 0;
             double inv_mean = 1 / mean;
-            BinRange curRange = new BinRange();
-            while (getRegionRight(level, curRange.stop, curRange)) {
+            BinCoords curRange = new BinCoords();
+            curRange.end = -1;
+            while ((curRange = getRegionRight(level, curRange.end + 1, curRange)).useable) {
 
                 ln         = n;
                 laverage   = average;
@@ -148,17 +155,20 @@ public class MeanShiftMethod {
                 average  = raverage;
                 variance = rvariance;
 
-                BinRange rightRange = new BinRange();
+                BinCoords rightRange = new BinCoords();
                 //int rstart,rstop;
-                if (!getRegionRight(level, curRange.stop + 1, rightRange)) break;
-                raverage = StdevAvg.getRangeAverage(this.rdBins, rightRange.start, rightRange.stop);
-                rvariance = StdevAvg.getRangeVariance(this.rdBins, raverage, rightRange.start, rightRange.stop);
-
-                BinRange leftRange = new BinRange();
-                if (!getRegionLeft(level, curRange.start - 1, leftRange)) {
+                if (!(rightRange = getRegionRight(level, curRange.end + 1, rightRange)).useable) 
+                    break;
+                raverage = StdevAvg.getRangeAverage(this.rdBins, rightRange.start, rightRange.end);
+                rvariance = StdevAvg.getRangeVariance(this.rdBins, raverage, rightRange.start, rightRange.end);
+                rn = rightRange.end - rightRange.start;
+                        
+                BinCoords leftRange = new BinCoords();
+                if (!(leftRange = getRegionLeft(level, curRange.start - 1, leftRange)).useable) {
                     // Have no left region -- need to calculate variances
-                    average = StdevAvg.getRangeAverage(this.rdBins, curRange.start, curRange.stop);
-                    variance = StdevAvg.getRangeVariance(this.rdBins, average, curRange.start, curRange.stop);
+                    average = StdevAvg.getRangeAverage(this.rdBins, curRange.start, curRange.end);
+                    variance = StdevAvg.getRangeVariance(this.rdBins, average, curRange.start, curRange.end);
+                    n = curRange.end - curRange.start;
                     continue;
                 }
 
@@ -168,11 +178,11 @@ public class MeanShiftMethod {
                 if (ln <= 15 || n <= 15 || rn <= 15) {
                     // Check sigma condition
                     double ns = 1.8;
-                    double nsigma = ns * Math.sqrt(level[leftRange.stop] * inv_mean) * sigma;
-                    if (Math.abs(level[leftRange.stop] - level[curRange.start]) < nsigma) 
+                    double nsigma = ns * Math.sqrt(level[leftRange.end] * inv_mean) * sigma;
+                    if (Math.abs(level[leftRange.end] - level[curRange.start]) < nsigma) 
                         continue;
                     nsigma = ns * Math.sqrt(level[rightRange.start] * inv_mean) * sigma;
-                    if (Math.abs(level[rightRange.start] - level[curRange.stop]) < nsigma) 
+                    if (Math.abs(level[rightRange.start] - level[curRange.end]) < nsigma) 
                         continue;
                 } else {
                     // Checking if the two regions are compatible
@@ -188,42 +198,46 @@ public class MeanShiftMethod {
                     continue;
 
                 // Mask
-                for (int b = curRange.start; b <= curRange.stop; b++) 
+                for (int b = curRange.start; b <= curRange.end; b++) 
                     mask[b] = true;
             }
         }
         
-        private boolean getRegionRight(double[] level, int bin, BinRange range){
-            if (bin < 0 || bin >= this.rdBins.length) 
-                return false;
-            int start = bin, stop = start;
-            while (stop < this.rdBins.length && sameLevel(level[start],level[stop])) 
-                stop++;
-            stop--;
-            range.start = start;
-            range.stop = stop;
-            return true;
+        private BinCoords getRegionRight(double[] level, int bin, BinCoords range){
+            if (bin < 0 || bin >= this.rdBins.length) {
+                range.useable = false;
+                return range;
+            }else{
+                int start = bin, stop = start;
+            
+                while (stop < this.rdBins.length && sameLevel(level[start],level[stop])) 
+                    stop++;
+                stop--;
+                range.start = start;
+                range.end = stop;
+                range.useable = true;
+                return range;
+            }
         }
         
-        private boolean getRegionLeft(double[] level, int bin, BinRange range){
-            if (bin < 0 || bin >= this.rdBins.length) 
-                return false;
-            int start = bin, stop = bin;
-            while (start >= 0 && sameLevel(level[start],level[stop])) 
-                start--;
-            start++;
-            range.start = start;
-            range.stop = stop;
-            return true;
+        private BinCoords getRegionLeft(double[] level, int bin, BinCoords range){
+            if (bin < 0 || bin >= this.rdBins.length){ 
+                range.useable = false;
+                return range;
+            }else{
+                int start = bin, stop = bin;
+                while (start >= 0 && sameLevel(level[start],level[stop])) 
+                    start--;
+                start++;
+                range.start = start;
+                range.end = stop;
+                range.useable = true;
+                return range;
+            }
         }
         
         private boolean sameLevel(double t, double l){
             return Math.abs(t - l) < 0.01d;
-        }
-        
-        private class BinRange{
-            public int start = 0;
-            public int stop = 0;
         }
         
         private void CalcLevels(double[] level, boolean[] mask, int bin_band, double mean, double sigma){

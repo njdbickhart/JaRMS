@@ -12,6 +12,7 @@ package DataUtils;
 public class BinCoords {
     public int start = 0;
     public int end = 0;
+    public boolean useable = false;
     
     public boolean isNormalInterval(){
         return this.end > this.start;

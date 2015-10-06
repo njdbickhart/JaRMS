@@ -52,11 +52,17 @@ public class ChrHistogramFactory {
             if(!chr.equals(prevChr) && startL){                
                 // cleanup memory
                 histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
+                curItr++;
+                while(curItr < starts.length){
+                    // Account for empty bins at the end of the chromosome
+                    histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) 0.0d);
+                    curItr++;
+                }
                 starts = wins.getStarts(chr);
                 ends = wins.getEnds(chr);
                 histograms.get(prevChr).writeToTemp();
                 prevChr = chr;
-                count = 0;
+                count = 0; curItr = 0;
                 histograms.put(chr, new ChrHistogram(chr, tmp));
             }else if(!startL){
                 prevChr = chr;
@@ -99,5 +105,11 @@ public class ChrHistogramFactory {
     
     public ChrHistogram getChrHistogram(String chr){
         return this.histograms.get(chr);
+    }
+    
+    public void checkSumScores(){
+        for(String chr : this.histograms.keySet()){
+            this.histograms.get(chr).recalculateSumScore();
+        }
     }
 }

@@ -64,32 +64,38 @@ public class SVSegmentation {
         globalSS /= globalNumBins - 1;
         
         final double globalStdev = Math.sqrt(globalSS);
+        log.log(Level.INFO, "GC corrected, global mean-> " + globalMean + " and Stdev-> " + globalStdev);
         
         // Process chromosomes
         List<Future<List<BedStats>>> SegFutures = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         TDistributionFunction ttest = new TDistributionFunction(wins.getWindowSize());
         
-        for(String chr : wins.getChrList()){
-            SegFutures.add(executor.submit(new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), 
-                    meanShift.getChrLevels(chr), 
-                    ttest, 
-                    wins, 
-                    chr, 
-                    globalMean, 
-                    globalStdev)));
-        }
+        //for(String chr : wins.getChrList()){
+        //    SegFutures.add(executor.submit(new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), 
+        //            meanShift.getChrLevels(chr), 
+        //            ttest, 
+        //            wins, 
+        //            chr, 
+        //            globalMean, 
+        //            globalStdev)));
+        //}
         
-        executor.shutdown();
+        //executor.shutdown();
         
-        while(!executor.isTerminated()){}
+        //while(!executor.isTerminated()){}
         
         List<BedStats> FinalCalls = new ArrayList<>();
-        for(Future<List<BedStats>> threadSegs : SegFutures){
+        for(String chr : wins.getChrList()){
+        //for(Future<List<BedStats>> threadSegs : SegFutures){
             try {
-                FinalCalls.addAll(threadSegs.get());
+                Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), meanShift.getChrLevels(chr), ttest, wins, chr, globalMean, globalStdev);
+                FinalCalls.addAll(segmentor.call());
+                //FinalCalls.addAll(threadSegs.get());
             } catch (InterruptedException | ExecutionException ex) {
                 log.log(Level.SEVERE, "Error retrieving Threaded results!", ex);
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, null, ex);
             }
         }
         
@@ -288,7 +294,7 @@ public class SVSegmentation {
                 }
 
                 n_add = 0;
-                for (int i = 0;i <= this.corrRD.length; i++){ 
+                for (int i = 0;i < this.corrRD.length; i++){ 
                     if(this.calls.get(i).equals(CallEnum.POTENTIAL)){
                         this.calls.set(i, this.calls.get(i -1));
                         n_add++;

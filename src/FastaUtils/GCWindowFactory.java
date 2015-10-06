@@ -48,7 +48,7 @@ public class GCWindowFactory {
     }
     
     private void processFastaFile(WindowPlan wins){
-        try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.defaultCharset())){
+        try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.forName("UTF-8"))){
             String line, prevChr = "NA";
             Integer[] starts = null, ends = null;
             int totalCount = 0, bpCount = 0, binIdx = 0, gcCount = 0;
@@ -62,11 +62,13 @@ public class GCWindowFactory {
                     this.histograms.put(line, new GCHistogram(line, this.tmpPath));
                     if(prevChr.equals("NA")){
                         prevChr = line;
+                        starts = wins.getStarts(line);
+                        ends = wins.getEnds(line);
                     }else{
                         this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
                         this.histograms.get(prevChr).writeToTemp();
                         prevChr = line;
-                        totalCount = 0; bpCount = 0; gcCount = 0;
+                        totalCount = 0; bpCount = 0; gcCount = 0; binIdx = 0;
                         starts = wins.getStarts(line);
                         ends = wins.getEnds(line);
                     }
@@ -81,7 +83,7 @@ public class GCWindowFactory {
                             case 'C':
                                 gcCount++;
                         }
-                        if(bpCount >= wins.getWindowSize() - 1){
+                        if(bpCount >= wins.getWindowSize()){
                             this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
                             bpCount = 0; gcCount = 0;
                             binIdx++;

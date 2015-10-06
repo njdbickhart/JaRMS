@@ -28,6 +28,8 @@ public class LevelHistogram extends ChrHistogram{
     }
     
     public void performMerger(double delta){
+        if(this.score.isEmpty())
+            this.readTemp();
         this.mergeLevels(0, delta);
     }
     

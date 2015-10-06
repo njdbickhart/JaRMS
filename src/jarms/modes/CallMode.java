@@ -101,6 +101,9 @@ public class CallMode {
         // Correct GC
         ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(Paths.get(this.outDir), metadata, rawRDHisto, GCWins);
         
+        // Check to see if we nee to recalculate the sum values for each GCCorrected entity
+        gcCorrectRDHisto.checkSumScores();
+        
         // Mean shift signal
         MeanShiftMethod shifter = new MeanShiftMethod();
         shifter.Partition(rawRDHisto, wins, Paths.get(this.outDir), 128, threads);

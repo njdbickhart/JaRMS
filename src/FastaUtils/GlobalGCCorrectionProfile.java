@@ -101,7 +101,13 @@ public class GlobalGCCorrectionProfile {
                 int gcidx = gchisto.getRoundedGC(n);
                 if(this.correction[gcidx] == -1)
                     continue;
-                CorrectedRD.addHistogramData(tmpDir, chr, chisto.getStart(n), chisto.getEnd(n), chisto.getScore(n) * this.correction[gcidx]);
+                double score = chisto.getScore(n);
+                double correctval = this.correction[gcidx];
+                double correctedscore = score * correctval;
+                if(Double.isNaN(correctedscore)){
+                    correctedscore = 0.0d;
+                }
+                CorrectedRD.addHistogramData(tmpDir, chr, chisto.getStart(n), chisto.getEnd(n), correctedscore);
             }
             
             log.log(Level.INFO, "Completed correction of " + chr + " and now writing corrected RD histogram to tmp file");
