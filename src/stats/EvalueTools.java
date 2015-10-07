@@ -14,8 +14,9 @@ import org.apache.commons.math3.special.Erf;
  */
 public class EvalueTools {
     
-    public static boolean AdjustToEvalue(double mean, double sd, int genomeSize, TDistributionFunction tdist, double[] rd, BinCoords b, double eval){
+    public static BinCoords AdjustToEvalue(double mean, double sd, int genomeSize, TDistributionFunction tdist, double[] rd, BinCoords b, int winsize, double eval){
         final int MAX_STEPS = 1000;
+        b.useable = false;
         int s[] = new int[MAX_STEPS], e[] = new int[MAX_STEPS];
         int step_count = 0;
         s[step_count] = b.start;
@@ -23,27 +24,27 @@ public class EvalueTools {
         step_count++;
         int ll_ind = 1,lr_ind = 2,rl_ind = 3,rr_ind = 4;
 
-        double val = GetEValue(mean,sd, genomeSize, tdist, rd,b.start,b.end);
+        double val = GetEValue(mean,sd, genomeSize, tdist, rd,winsize,b.start,b.end);
         while (b.end > b.start + 1 && val > eval && step_count < MAX_STEPS) {
           double best_e = 1e+10, tmp = 0;
           int best_index = 0;
           if (b.start - 1 >= 0 && // Left left
-              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,b.start - 1,b.end)) < best_e) {
+              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,winsize,b.start - 1,b.end)) < best_e) {
             best_e = tmp;
             best_index = ll_ind;
           }
           if (b.start + 1 < rd.length && // Left right
-              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,b.start + 1,b.end)) < best_e) {
+              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,winsize,b.start + 1,b.end)) < best_e) {
             best_e = tmp;
             best_index = lr_ind;
           }
           if (b.end - 1 >= 0 && // Right left
-              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,b.start,b.end - 1)) < best_e) {
+              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,winsize,b.start,b.end - 1)) < best_e) {
             best_e = tmp;
             best_index = rl_ind;
           }
           if (b.end + 1 < rd.length && // Right right
-              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,b.start,b.end + 1)) < best_e) {
+              (tmp = GetEValue(mean,sd,genomeSize, tdist,rd,winsize,b.start,b.end + 1)) < best_e) {
             best_e = tmp;
             best_index = rr_ind;
           }
@@ -61,8 +62,9 @@ public class EvalueTools {
           step_count++;
         }
 
-        if (b.end > b.start && val <= eval) return true;
-        return false;
+        if (b.end > b.start && val <= eval) 
+            b.useable = true;
+        return b;
     }
     
     public static double GetGaussianEValue(double mean,double sigma,double rd[],
@@ -89,7 +91,7 @@ public class EvalueTools {
         return GenomeSize * Math.pow(p, n);
     }
     
-    public static double GetEValue(double mean, double sd, int genomeSize, TDistributionFunction tdist, double[] rd, int start, int end){
+    public static double GetEValue(double mean, double sd, int genomeSize, TDistributionFunction tdist, double[] rd, int winsize, int start, int end){
         int n = end - start + 1;
         double aver = 0,s = 0, over_n = 1./n;
         for (int b = start;b <= end;b++) {
@@ -108,8 +110,12 @@ public class EvalueTools {
         if (x > 0) ret = 1 - ret;
         
         //CHECK: originally, this was "*" the inverse of the bin count and "*" the length of the bin stretch
-        ret *= genomeSize / (rd.length * (end - start + 1));
-
+        double invbins = 1.0d / winsize;
+        double invsubbins = 1.0d / (end - start + 1);
+        double testret = ret * (genomeSize * (1 - 0.10)) * invbins * invsubbins;
+        ret *= (genomeSize * (1 - 0.10)) / (winsize * (end - start + 1));
+        
+        
         return ret;
     }
     

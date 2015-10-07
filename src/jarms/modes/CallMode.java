@@ -106,7 +106,7 @@ public class CallMode {
         
         // Mean shift signal
         MeanShiftMethod shifter = new MeanShiftMethod();
-        shifter.Partition(rawRDHisto, wins, Paths.get(this.outDir), 128, threads);
+        shifter.Partition(gcCorrectRDHisto, wins, Paths.get(this.outDir), 128, threads);
         
         // Call SVs
         SVSegmentation svCaller = new SVSegmentation(this.outDir);

@@ -38,7 +38,7 @@ public class TDistributionFunction {
         }catch(NotStrictlyPositiveException ex){
             log.log(Level.SEVERE, "Error attempting to create TDist function for: " + n, ex);
         }
-        return this.functions.get(n).density(value);
+        return this.functions.get(n).cumulativeProbability(value);
     }
     
     public double TestOneRegion(double value, double mean, double sigma, int n){

@@ -197,7 +197,7 @@ public class SVSegmentation {
                 }
                 int start  = bs * wins.getWindowSize() + 1;
                 int end    = (be + 1) * wins.getWindowSize();
-                double e  = EvalueTools.GetEValue(this.chrMean,this.chrSD,this.GenomeSize, this.ttest, this.corrRD,bs,be);
+                double e  = EvalueTools.GetEValue(this.chrMean,this.chrSD,this.GenomeSize, this.ttest, this.corrRD,wins.getWindowSize(),bs,be);
                 double e2 = EvalueTools.GetGaussianEValue(this.chrMean,this.chrSD,this.corrRD,bs,be, this.GenomeSize);
                 double e3 = 1,e4 = 1;
                 int add = Math.round(1000.0f / wins.getWindowSize() + 0.5f);
@@ -219,27 +219,43 @@ public class SVSegmentation {
         }
         
         private void IdentifyInitialRegions(double cut){
+            // I changed this from the original logic to ensure that deletions did not receive priority over duplications
             double min =  this.chrMean - cut;
             double max = this.chrMean + cut;
             for (int b = 0;b < this.corrRD.length;b++) {
                 BinCoords bin = new BinCoords();
-                int b0 = b;
-                bin.start = b;
-                while (b < this.corrRD.length && level.getScore(b) < min) 
-                    b++;
-                bin.end = b - 1;
-                if (bin.isNormalInterval() && EvalueTools.AdjustToEvalue(chrMean,chrSD, GenomeSize, ttest, this.corrRD,bin,CUTOFF_REGION))
+                int bmax = b;
+                if(b <= 15926 && b >= 15921){
+                    System.out.println("hey");
+                }
+                // Deletion identification
+                bin.start = bin.end = b;
+                while (bin.end < this.corrRD.length && level.getScore(bin.end) < min) 
+                    bin.end += 1;
+                bin.end -= 1;
+                if (bin.isNormalInterval() 
+                        && (bin = EvalueTools.AdjustToEvalue(chrMean,chrSD, GenomeSize, ttest, this.corrRD,bin,wins.getWindowSize(),CUTOFF_REGION)).useable){
+                    bmax = bin.end;
                     for (int i = bin.start;i <= bin.end;i++) 
                         this.calls.set(i, CallEnum.DELETION);
-                bin.start = b;
-                while (b < this.corrRD.length && level.getScore(b) > max) 
-                    b++;
-                bin.end = b - 1;
-                if (bin.isNormalInterval() && EvalueTools.AdjustToEvalue(chrMean,chrSD,GenomeSize, ttest, this.corrRD, bin,CUTOFF_REGION))
+                }
+                
+                // Duplication identification
+                bin.start = bin.end = b;
+                while (bin.end < this.corrRD.length && level.getScore(bin.end) > max) 
+                    bin.end += 1;
+                bin.end -= 1;
+                if (bin.isNormalInterval() 
+                        && (bin = EvalueTools.AdjustToEvalue(chrMean,chrSD,GenomeSize, ttest, this.corrRD, bin,wins.getWindowSize(),CUTOFF_REGION)).useable){
+                    bmax = bin.end;
                     for (int i = bin.start;i <= bin.end;i++) 
                         this.calls.set(i, CallEnum.DUPLICATION);
-                if (b > b0) 
-                    b--;
+                }
+                if(bmax > 15926 && b < 15921){
+                    System.out.println("hey");
+                }
+                if (bmax > b) 
+                    b = bmax;
             }
         }
         
