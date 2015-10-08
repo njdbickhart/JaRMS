@@ -43,7 +43,7 @@ public class TDistributionFunction {
     
     public double TestOneRegion(double value, double mean, double sigma, int n){
         double x = (value - mean) / Math.sqrt(sigma) * Math.sqrt(n);
-        double p = this.getDensityValue(n -1, value); 
+        double p = this.getDensityValue(n -1, x); 
         if (x > 0) p = 1 - p;
         return p;
     }

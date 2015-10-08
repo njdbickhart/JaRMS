@@ -20,7 +20,7 @@ public class WindowPlan {
     private final Map<String, Integer[]> ends = new ConcurrentHashMap<>();
     private final Map<String, Integer> numBins = new ConcurrentHashMap<>();
     private int windowSize;
-    private int GenomeSize;
+    private long GenomeSize;
     
     public void GenerateWindows(BamMetadataSampler bam){
         this.GenomeSize = bam.chrLens.values().stream()
@@ -94,7 +94,7 @@ public class WindowPlan {
     public int getWindowSize(){
         return this.windowSize;
     }
-    public int getGenomeSize(){
+    public long getGenomeSize(){
         return this.GenomeSize;
     }
     public Set<String> getChrList(){

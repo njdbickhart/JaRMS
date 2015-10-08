@@ -24,6 +24,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import stats.GaussianFitMeanStdev;
 import stats.StdevAvg;
 import stats.TDistributionFunction;
 
@@ -99,8 +100,14 @@ public class MeanShiftMethod {
                 mask[i] = false;
             
             double[] level = Arrays.copyOf(rdBins, rdBins.length);
-            double mean = StdevAvg.DoubleAvg(rdBins);
-            double sigma = StdevAvg.stdevDBL(mean, rdBins);
+            double firstmean = StdevAvg.DoubleAvg(rdBins);
+            double firstsigma = StdevAvg.stdevDBL(firstmean, rdBins);
+            
+            // NOTE: testing curve fit mean and sigma
+            GaussianFitMeanStdev fitter = new GaussianFitMeanStdev();
+            fitter.CalculateMeanStdev(rdBins);
+            double mean = fitter.getMean();
+            double sigma = fitter.getStdev();
             
             for (int bin_band = 2; bin_band <= range; bin_band++) {
       
@@ -154,7 +161,6 @@ public class MeanShiftMethod {
                 n        = rn;
                 average  = raverage;
                 variance = rvariance;
-
                 BinCoords rightRange = new BinCoords();
                 //int rstart,rstop;
                 if (!(rightRange = getRegionRight(level, curRange.end + 1, rightRange)).useable) 

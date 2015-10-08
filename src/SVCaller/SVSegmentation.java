@@ -29,6 +29,7 @@ import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import stats.EvalueTools;
+import stats.GaussianFitMeanStdev;
 import stats.StdevAvg;
 import stats.TDistributionFunction;
 
@@ -49,22 +50,27 @@ public class SVSegmentation {
     
     public void RunSegmentation(final ChrHistogramFactory corrGC, WindowPlan wins, MeanShiftMethod meanShift, int threads){
         // Calculate global mean and SD
-        double globalSum = wins.getChrList().stream()
-                .map(s -> corrGC.getChrHistogram(s).getSum())
-                .reduce(0.0d, (a, b) -> a + b);
+        /*double globalSum = wins.getChrList().stream()
+        .map(s -> corrGC.getChrHistogram(s).getSum())
+        .reduce(0.0d, (a, b) -> a + b);
         int globalNumBins = wins.getChrList().stream()
-                .map(s -> corrGC.getChrHistogram(s).getNumEntries())
-                .reduce(0, (a, b) -> a + b);
+        .map(s -> corrGC.getChrHistogram(s).getNumEntries())
+        .reduce(0, (a, b) -> a + b);
         
         final double globalMean = globalSum / (double) globalNumBins;
         
         double globalSS = wins.getChrList().stream()
-                .map(s -> corrGC.getChrHistogram(s).getSumSquares(globalMean))
-                .reduce(0.0d, (a, b) -> a + b);
+        .map(s -> corrGC.getChrHistogram(s).getSumSquares(globalMean))
+        .reduce(0.0d, (a, b) -> a + b);
         globalSS /= globalNumBins - 1;
         
-        final double globalStdev = Math.sqrt(globalSS);
-        log.log(Level.INFO, "GC corrected, global mean-> " + globalMean + " and Stdev-> " + globalStdev);
+        final double globalStdev = Math.sqrt(globalSS);*/
+        
+        GaussianFitMeanStdev fitter = new GaussianFitMeanStdev();
+        fitter.CalculateGlobalMeanStdev(corrGC, wins);
+        double gausmean = fitter.getMean();
+        double gausstdev = fitter.getStdev();
+        log.log(Level.INFO, "GC corrected, global mean-> " + gausmean + " and Stdev-> " + gausstdev);
         
         // Process chromosomes
         List<Future<List<BedStats>>> SegFutures = new ArrayList<>();
@@ -89,7 +95,7 @@ public class SVSegmentation {
         for(String chr : wins.getChrList()){
         //for(Future<List<BedStats>> threadSegs : SegFutures){
             try {
-                Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), meanShift.getChrLevels(chr), ttest, wins, chr, globalMean, globalStdev);
+                Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), meanShift.getChrLevels(chr), ttest, wins, chr, gausmean, gausstdev);
                 FinalCalls.addAll(segmentor.call());
                 //FinalCalls.addAll(threadSegs.get());
             } catch (InterruptedException | ExecutionException ex) {
@@ -127,7 +133,7 @@ public class SVSegmentation {
         /*
             Constants
         */
-        private final int GenomeSize;
+        private final long GenomeSize;
         private final double CUTOFF_REGION = 0.05d;
         private final double CUTOFF_TWO_REGIONS = 0.01;
         private final double GENOME_SIZE_CNV;
@@ -145,7 +151,10 @@ public class SVSegmentation {
             this.globalSD = globalSD;
             this.calls = new ArrayList<>(corrRD.length);
             this.ttest = ttest;
+            
+            // TODO: Debugging genome size estimates!
             this.GenomeSize = wins.getGenomeSize();
+            //this.GenomeSize = 2800000000l;
             this.GENOME_SIZE_CNV = this.GenomeSize * 0.1d;
         }
         
@@ -153,8 +162,10 @@ public class SVSegmentation {
         public List<BedStats> call() throws Exception {
             List<BedStats> FinalCalls = new ArrayList<>();
             // calculate mean and SD
-            this.chrMean = StdevAvg.DoubleAvg(corrRD);
-            this.chrSD = StdevAvg.stdevDBL(chrMean, corrRD);
+            GaussianFitMeanStdev fitter = new GaussianFitMeanStdev();
+            fitter.CalculateMeanStdev(corrRD);
+            this.chrMean = fitter.getMean();
+            this.chrSD = fitter.getStdev();
             
             // merge level signal
             double cut = this.chrMean / 4;
@@ -225,9 +236,6 @@ public class SVSegmentation {
             for (int b = 0;b < this.corrRD.length;b++) {
                 BinCoords bin = new BinCoords();
                 int bmax = b;
-                if(b <= 15926 && b >= 15921){
-                    System.out.println("hey");
-                }
                 // Deletion identification
                 bin.start = bin.end = b;
                 while (bin.end < this.corrRD.length && level.getScore(bin.end) < min) 
@@ -250,9 +258,6 @@ public class SVSegmentation {
                     bmax = bin.end;
                     for (int i = bin.start;i <= bin.end;i++) 
                         this.calls.set(i, CallEnum.DUPLICATION);
-                }
-                if(bmax > 15926 && b < 15921){
-                    System.out.println("hey");
                 }
                 if (bmax > b) 
                     b = bmax;
