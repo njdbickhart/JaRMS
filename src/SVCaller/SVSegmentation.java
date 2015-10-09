@@ -241,6 +241,7 @@ public class SVSegmentation {
                 while (bin.end < this.corrRD.length && level.getScore(bin.end) < min) 
                     bin.end += 1;
                 bin.end -= 1;
+                                
                 if (bin.isNormalInterval() 
                         && (bin = EvalueTools.AdjustToEvalue(chrMean,chrSD, GenomeSize, ttest, this.corrRD,bin,wins.getWindowSize(),CUTOFF_REGION)).useable){
                     bmax = bin.end;
@@ -326,7 +327,7 @@ public class SVSegmentation {
         
         private void IdentifyPotentialDels(double min){
             for (int b = 0;b < this.corrRD.length; b++) {
-                if(this.calls.get(b).equals(CallEnum.NORMAL))
+                if(!this.calls.get(b).equals(CallEnum.NORMAL))
                     continue;
                 int bs = b;
                 while (b < this.corrRD.length && level.getScore(b) < min) b++;
