@@ -46,7 +46,7 @@ public class JaRMS {
         // Identify and run mode
         switch(cmd.CurrentMode){
             case "call":
-                log.log(Level.INFO, "[MAIN] JaRMS call mode selected.");
+                log.log(Level.FINE, "[MAIN] JaRMS call mode selected.");
                 CallMode cluster = new CallMode(cmd);
                 cluster.run();
                 break;
@@ -105,7 +105,7 @@ public class JaRMS {
                 handler.setLevel(Level.ALL);
                 console.setLevel(Level.INFO);
             }else{
-                handler.setLevel(Level.INFO);
+                handler.setLevel(Level.FINE);
                 console.setLevel(Level.INFO);
             }
         } catch (IOException | SecurityException ex) {
@@ -121,9 +121,9 @@ public class JaRMS {
         mainLog.addHandler(console);
         
         // Log input arguments
-        log.log(Level.INFO, "[MAIN] Command line arguments supplied: ");
-        log.log(Level.INFO, StrUtils.StrArray.Join(args, " "));
-        log.log(Level.INFO, "[MAIN] Debug flag set to: " + debug);
+        log.log(Level.FINE, "[MAIN] Command line arguments supplied: ");
+        log.log(Level.FINE, StrUtils.StrArray.Join(args, " "));
+        log.log(Level.FINE, "[MAIN] Debug flag set to: " + debug);
     }
     
 }

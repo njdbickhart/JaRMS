@@ -67,12 +67,14 @@ public class CallMode {
         wins.GenerateWindows(metadata);
         
         // Create RD histograms
+        log.log(Level.FINE, "[CALLMODE] Starting RD histogram counting");
         ChrHistogramFactory rawRDHisto = new ChrHistogramFactory();
         try {
             rawRDHisto.processBamNoRG(bamFile, wins, outDir);
         } catch (Exception ex) {
             log.log(Level.SEVERE, "[CALLMODE] Error processing bam file!", ex);
         }
+        log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
         // Calculate global mean and SD RD prior to correction
         double rawSum = wins.getChrList().stream()
                 .map(s -> rawRDHisto.getChrHistogram(s).getSum())
@@ -91,12 +93,15 @@ public class CallMode {
         log.log(Level.INFO, "[CALLMODE] Unadjusted RD values: mean-> " + rawMean + " sd-> " +rawStdev);
         
         // Generate GC correction scheme
+        log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
         GCWindowFactory GCWins = new GCWindowFactory(this.fastaFile, this.outDir);
         GCWins.generateGCProfile(metadata, wins);
+        log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
         
         // Create GC correction utility
         GlobalGCCorrectionProfile gccorrect = new GlobalGCCorrectionProfile();
         gccorrect.CalculationGCCorrectionValues(metadata, rawRDHisto, GCWins, rawMean);
+        log.log(Level.FINE, "[CALLMODE] Corrected GC bias");
         
         // Correct GC
         ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(Paths.get(this.outDir), metadata, rawRDHisto, GCWins);
@@ -105,15 +110,19 @@ public class CallMode {
         gcCorrectRDHisto.checkSumScores();
         
         // Mean shift signal
+        log.log(Level.FINE, "[CALLMODE] Beginning mean shift algorithm");
         MeanShiftMethod shifter = new MeanShiftMethod();
         shifter.Partition(gcCorrectRDHisto, wins, Paths.get(this.outDir), 128, threads);
+        log.log(Level.FINE, "[CALLMODE] Ended mean shift algorithm");
         
         // Call SVs
         SVSegmentation svCaller = new SVSegmentation(this.outDir);
         svCaller.RunSegmentation(gcCorrectRDHisto, wins, shifter, threads);
+        log.log(Level.FINE, "[CALLMODE] Called SVs");
         
-        // Print out the calls
+        // Print out the calls and levels
         svCaller.printOutAllCalls();
+        svCaller.printOutCondensedLevels(shifter, wins);
     }
     
     private void ErrorExit(String value){

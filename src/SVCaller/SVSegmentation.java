@@ -119,6 +119,30 @@ public class SVSegmentation {
         }
     }
     
+    public void printOutCondensedLevels(MeanShiftMethod meanShift, WindowPlan wins){
+        try(BufferedWriter out = Files.newBufferedWriter(Paths.get(outfile.toString() + ".levels"), Charset.defaultCharset())){
+            for(String chr : wins.getChrList()){
+                int bs = 0, be = 0;
+                double[] levels = meanShift.getChrLevels(chr).retrieveRDBins();
+                double curlevel = levels[0];
+                
+                for(int i = 1; i < levels.length; i++){
+                    if(levels[i] != curlevel || i == levels.length - 1){
+                        int truestart = bs * wins.getWindowSize() + 1;
+                        int trueend = (be + 1) * wins.getWindowSize() + 1;
+                        out.write(chr + "\t" + truestart + "\t" + trueend + "\t" + curlevel + System.lineSeparator());
+                        bs  = i; be = i;
+                        curlevel = levels[i];
+                    }else{
+                        be = i; 
+                    }
+                }
+            }
+        }catch(IOException ex){
+            log.log(Level.SEVERE, "Error printing out condensed levels!", ex);
+        }
+    }
+    
     
     private class Segmentation implements Callable<List<BedStats>>{
         private final double[] corrRD;
