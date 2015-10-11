@@ -6,11 +6,13 @@
 package SVCaller;
 
 import DataUtils.BinCoords;
+import DataUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;
 import HistogramUtils.LevelHistogram;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,11 +45,11 @@ public class MeanShiftMethod {
         //wins.getChrList().stream().forEach((chr) -> {
         //    workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
         //});
-        
+        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".levels.tmp"));  
         wins.getChrList().stream().forEach((chr) -> {
         //workers.stream().forEach((chrHisto) -> {
             try {
-                MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range);
+                MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), rand, chr, range);
                 LevelHistogram c = shifter.call();
                 //LevelHistogram c = cHisto.get();
                 this.shiftedChrHistos.put(c.getChr(), c);
@@ -72,7 +74,7 @@ public class MeanShiftMethod {
         private final WindowPlan wins;
         private final double[] rdBins;
         private final String chr;
-        private final Path tmpDir;
+        private final ThreadTempRandAccessFile tmpDir;
         private final TDistributionFunction ttest;
         // Range is the bin_range which is typically 128
         private final int range;
@@ -81,7 +83,7 @@ public class MeanShiftMethod {
         private final double CUTOFF_TWO_REGIONS = 0.01;
         private final double[] inversions = new double[invnum];
         
-        public MeanShifter(WindowPlan wins, TDistributionFunction ttest, double[] rdBins, Path tmpDir, String chr, int range){
+        public MeanShifter(WindowPlan wins, TDistributionFunction ttest, double[] rdBins, ThreadTempRandAccessFile tmpDir, String chr, int range){
             this.wins = wins;
             this.rdBins = rdBins;
             this.tmpDir = tmpDir;

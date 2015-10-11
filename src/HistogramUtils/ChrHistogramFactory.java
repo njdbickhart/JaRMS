@@ -7,6 +7,7 @@ package HistogramUtils;
 
 // Collect read midpoint position count arrays for each bam
 
+import DataUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import htsjdk.samtools.DefaultSAMRecordFactory;
 import htsjdk.samtools.SAMRecord;
@@ -44,6 +45,7 @@ public class ChrHistogramFactory {
     }
 
     private void AlignmentIteration(SamReader reader, WindowPlan wins, Path tmp) throws Exception {
+        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmp.toString() + ".rdhisto.tmp"));        
         Integer[] starts = null; Integer[] ends = null;
         String prevChr = "NA"; int curItr = 0; int count = 0; boolean startL = false;
         // Assuming BAM is sorted
@@ -63,12 +65,12 @@ public class ChrHistogramFactory {
                 histograms.get(prevChr).writeToTemp();
                 prevChr = chr;
                 count = 0; curItr = 0;
-                histograms.put(chr, new ChrHistogram(chr, tmp));
+                histograms.put(chr, new ChrHistogram(chr, rand));
             }else if(!startL){
                 prevChr = chr;
                 starts = wins.getStarts(chr);
                 ends = wins.getEnds(chr);
-                histograms.put(chr, new ChrHistogram(chr, tmp));
+                histograms.put(chr, new ChrHistogram(chr, rand));
                 startL = true;
             }
             
@@ -96,9 +98,9 @@ public class ChrHistogramFactory {
         }
     }
     
-    public void addHistogramData(Path tmpDir, String chr, int start, int end, double score){
+    public void addHistogramData(ThreadTempRandAccessFile rand, String chr, int start, int end, double score){
         if(!this.histograms.containsKey(chr)){
-            this.histograms.put(chr, new ChrHistogram(chr, tmpDir));
+            this.histograms.put(chr, new ChrHistogram(chr, rand));
         }
         this.histograms.get(chr).addHistogram(chr, start, end, score);
     }

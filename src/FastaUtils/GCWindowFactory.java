@@ -5,6 +5,7 @@
  */
 package FastaUtils;
 
+import DataUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import HistogramUtils.BamMetadataSampler;
 import TempFiles.binaryUtils.IntUtils;
@@ -48,6 +49,7 @@ public class GCWindowFactory {
     }
     
     private void processFastaFile(WindowPlan wins){
+        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(this.tmpPath.toString() + ".gcprofile.tmp"));
         try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.forName("UTF-8"))){
             String line, prevChr = "NA";
             Integer[] starts = null, ends = null;
@@ -59,7 +61,7 @@ public class GCWindowFactory {
                     if(!wins.containsChr(line))
                         throw new Exception("Error! Fasta file contains chromosome not found in bam: " + line);
 
-                    this.histograms.put(line, new GCHistogram(line, this.tmpPath));
+                    this.histograms.put(line, new GCHistogram(line, rand));
                     if(prevChr.equals("NA")){
                         prevChr = line;
                         starts = wins.getStarts(line);
@@ -127,6 +129,7 @@ public class GCWindowFactory {
     private void generateGCHistoFromProfile(BamMetadataSampler bamMeta){
         // Load existing GC profile and transfer to histogram class
         log.log(Level.INFO, "Loading previously generated GC profile");
+        ThreadTempRandAccessFile randprofile = new ThreadTempRandAccessFile(Paths.get(this.tmpPath.toString() + ".gcprofile.tmp"));
         try(RandomAccessFile rand = new RandomAccessFile(new File(this.expectedFastaProfile), "r")){
             // Get the top header
             byte magic = rand.readByte();
@@ -151,7 +154,7 @@ public class GCWindowFactory {
                 
                 rand.read(ints);
                 int numbins = IntUtils.byteArrayToInt(ints);
-                this.histograms.put(chrname, new GCHistogram(chrname, this.tmpPath));
+                this.histograms.put(chrname, new GCHistogram(chrname, randprofile));
                 this.histograms.get(chrname).transferFromProfile(rand, numbins);
                 log.log(Level.INFO, "Loaded GC profile from chr: " + chrname);
             }

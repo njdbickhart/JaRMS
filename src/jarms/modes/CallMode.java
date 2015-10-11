@@ -14,6 +14,7 @@ import HistogramUtils.ChrHistogramFactory;
 import SVCaller.MeanShiftMethod;
 import SVCaller.SVSegmentation;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -123,6 +124,16 @@ public class CallMode {
         // Print out the calls and levels
         svCaller.printOutAllCalls();
         svCaller.printOutCondensedLevels(shifter, wins);
+        
+        // Clean up tmp files
+        final File folder = new File(System.getProperty("user.dir"));
+        final File[] files = folder.listFiles((final File dir, final String name) -> 
+                name.endsWith("gccorr.tmp") || name.endsWith("gcprofile.tmp") || name.endsWith("levels.tmp") || name.endsWith("rdhisto.tmp"));
+        for ( final File file : files ) {
+            if ( !file.delete() ) {
+                System.err.println( "Can't remove " + file.getAbsolutePath() );
+            }
+        }
     }
     
     private void ErrorExit(String value){

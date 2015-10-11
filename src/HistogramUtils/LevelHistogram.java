@@ -5,26 +5,45 @@
  */
 package HistogramUtils;
 
+import DataUtils.ThreadTempRandAccessFile;
+import TempFiles.binaryUtils.DoubleUtils;
+import TempFiles.binaryUtils.IntUtils;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Derek.Bickhart
  */
 public class LevelHistogram extends ChrHistogram{
+    private final Logger log = Logger.getLogger(LevelHistogram.class.getName());
     private final double PRECISION = 0.01d;
 
-    public LevelHistogram(String chr, Path tmpdir) {
+    public LevelHistogram(String chr, ThreadTempRandAccessFile tmpdir) {
         super(chr, tmpdir);
     }
     
     /*
-        Method designed to remove previously written Level data and replace with the merged data
+        Method designed to rewrite previously written Level data and replace with the merged data
     */
     public void replaceTemp(){
-        this.tempFile.toFile().delete();        
-        super.createTemp(tempFile, chr);
-        super.writeToTemp();
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
+            for(int x = 0; x < super.numEntries; x++){
+                //rand.write(IntUtils.Int32ToByteArray(this.start.get(x)));
+                //rand.write(IntUtils.Int32ToByteArray(this.end.get(x)));
+                rand.seek(rand.getFilePointer() + 8);
+                rand.write(DoubleUtils.Dbl64toByteArray(this.score.get(x)));
+            }
+        }catch(IOException ex){
+            log.log(Level.SEVERE, "Error writing to LevelHistogram temp file for chr: " + this.chr, ex);
+        }
+        
+        // Clear the list
+        this.clearData();
     }
     
     public void performMerger(double delta){

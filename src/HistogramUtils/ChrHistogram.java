@@ -6,6 +6,7 @@
 package HistogramUtils;
 
 import DataUtils.TempHistogram;
+import DataUtils.ThreadTempRandAccessFile;
 import TempFiles.binaryUtils.DoubleUtils;
 import TempFiles.binaryUtils.IntUtils;
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class ChrHistogram extends TempHistogram<Double>{
     private static final Logger log = Logger.getLogger(ChrHistogram.class.getName());
     private double sum = 0.0d;
     
-    public ChrHistogram(String chr, Path tmpdir) {
+    public ChrHistogram(String chr, ThreadTempRandAccessFile tmpdir) {
         super(chr, tmpdir);
     }
 
@@ -51,7 +52,8 @@ public class ChrHistogram extends TempHistogram<Double>{
     */
     @Override
     public void writeToTemp() {
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "rw")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForWriting(chr);
             for(int x = 0; x < super.numEntries; x++){
                 rand.write(IntUtils.Int32ToByteArray(this.start.get(x)));
                 rand.write(IntUtils.Int32ToByteArray(this.end.get(x)));
@@ -67,7 +69,8 @@ public class ChrHistogram extends TempHistogram<Double>{
 
     @Override
     public void readTemp() {
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
             if(this.numEntries <= 0)
                 throw new Exception ("Reading empty temp file!");
             byte[] ints = new byte[4];
@@ -89,7 +92,8 @@ public class ChrHistogram extends TempHistogram<Double>{
     
     public double[] retrieveRDBins(){
         double[] bins = new double[this.numEntries];
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
             if(this.numEntries <= 0)
                 throw new Exception ("Reading empty temp file!");
             byte[] ints = new byte[4];
@@ -129,7 +133,8 @@ public class ChrHistogram extends TempHistogram<Double>{
     
     public double getSumSquares(double mean){
         double ss = 0.0d;
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
             if(this.numEntries <= 0)
                 throw new Exception ("Reading empty temp file!");
             byte[] ints = new byte[4];
@@ -152,7 +157,8 @@ public class ChrHistogram extends TempHistogram<Double>{
     
     public void recalculateSumScore(){
         if(Double.isNaN(sum)){
-            try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+            try{
+                RandomAccessFile rand = this.tempFile.getFileForReading(chr);
                 if(this.numEntries <= 0)
                     throw new Exception ("Reading empty temp file!");
                 byte[] ints = new byte[4];

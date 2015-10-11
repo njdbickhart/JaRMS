@@ -5,10 +5,12 @@
  */
 package FastaUtils;
 
+import DataUtils.ThreadTempRandAccessFile;
 import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -80,6 +82,7 @@ public class GlobalGCCorrectionProfile {
     }
     
     public ChrHistogramFactory CorrectGC(Path tmpDir, BamMetadataSampler bam, ChrHistogramFactory rd, GCWindowFactory gc){
+        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".gccorr.tmp"));
         ChrHistogramFactory CorrectedRD = new ChrHistogramFactory();
         for(String chr : bam.chrOrder){
             ChrHistogram chisto = rd.getChrHistogram(chr);
@@ -107,7 +110,7 @@ public class GlobalGCCorrectionProfile {
                 if(Double.isNaN(correctedscore)){
                     correctedscore = 0.0d;
                 }
-                CorrectedRD.addHistogramData(tmpDir, chr, chisto.getStart(n), chisto.getEnd(n), correctedscore);
+                CorrectedRD.addHistogramData(rand, chr, chisto.getStart(n), chisto.getEnd(n), correctedscore);
             }
             
             log.log(Level.INFO, "Completed correction of " + chr + " and now writing corrected RD histogram to tmp file");

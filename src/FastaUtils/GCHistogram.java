@@ -6,6 +6,7 @@
 package FastaUtils;
 
 import DataUtils.TempHistogram;
+import DataUtils.ThreadTempRandAccessFile;
 import TempFiles.binaryUtils.DoubleUtils;
 import TempFiles.binaryUtils.IntUtils;
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.logging.Logger;
 public class GCHistogram extends TempHistogram<Double>{
     private static final Logger log = Logger.getLogger(GCHistogram.class.getName());
     
-    public GCHistogram(String chr, Path tmpdir) {
+    public GCHistogram(String chr, ThreadTempRandAccessFile tmpdir) {
         super(chr, tmpdir);
     }
 
@@ -42,7 +43,8 @@ public class GCHistogram extends TempHistogram<Double>{
 
     @Override
     public void writeToTemp() {
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "rw")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForWriting(chr);
             for(int x = 0; x < super.numEntries; x++){
                 rand.write(IntUtils.Int32ToByteArray(this.start.get(x)));
                 rand.write(IntUtils.Int32ToByteArray(this.end.get(x)));
@@ -57,7 +59,8 @@ public class GCHistogram extends TempHistogram<Double>{
     }
     
     public void transferFromProfile(RandomAccessFile profile, int numBins){
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "rw")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForWriting(chr);
             byte[] ints = new byte[4];
             byte[] dbls = new byte[8];
             this.numEntries = numBins;
@@ -89,9 +92,8 @@ public class GCHistogram extends TempHistogram<Double>{
         8 bytes gc percentage
     */
     public void transferToProfile(RandomAccessFile profile) throws Exception{
-        if(!this.tempFile.toFile().canRead())
-            throw new Exception("Error! Cannot read temporary GC Histogram file!");
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
             // Start with writing the header
             // Account for super long contig names!
             byte[] chrlen = IntUtils.Int16ToTwoByteArray(this.chr.length());
@@ -122,7 +124,8 @@ public class GCHistogram extends TempHistogram<Double>{
 
     @Override
     public void readTemp() {
-        try(RandomAccessFile rand = new RandomAccessFile(this.tempFile.toFile(), "r")){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
             if(this.numEntries <= 0)
                 throw new Exception ("Reading empty temp file!");
             byte[] ints = new byte[4];

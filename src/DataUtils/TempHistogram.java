@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  * @param <T>
  */
 public abstract class TempHistogram <T extends Object>{
-    protected Path tempFile;
+    protected ThreadTempRandAccessFile tempFile;
     protected int numEntries;
     protected String chr;
     protected int curIdx = 0;
@@ -30,20 +30,21 @@ public abstract class TempHistogram <T extends Object>{
     protected List<Integer> end = new ArrayList<>();
     protected List<T> score = new ArrayList<>();
     
-    public TempHistogram(String chr, Path tmpdir){
+    public TempHistogram(String chr, ThreadTempRandAccessFile tmpFile){
         this.chr = chr;
-        this.createTemp(tmpdir, chr);
+        this.tempFile = tmpFile;
+        //this.createTemp(tmpdir, chr);
     }
     
     protected void createTemp(Path path, String chr){
-        try {
-            Random rand = new Random();
-            path = Paths.get(path.toString() + "." + chr + "." + rand.nextInt());
-            this.tempFile = Files.createTempFile(path.toString(), ".tmp");
-            this.tempFile.toFile().deleteOnExit();
+        /*try {
+        Random rand = new Random();
+        path = Paths.get(path.toString() + "." + chr + "." + rand.nextInt());
+        //this.tempFile = Files.createTempFile(path.toString(), ".tmp");
+        //this.tempFile.toFile().deleteOnExit();
         } catch (IOException ex) {
-            Logger.getLogger(TempHistogram.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Logger.getLogger(TempHistogram.class.getName()).log(Level.SEVERE, null, ex);
+        }*/
     }
     
     
