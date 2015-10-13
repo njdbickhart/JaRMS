@@ -27,6 +27,8 @@ public class GaussianFitMeanStdev {
     public void CalculateGlobalMeanStdev(ChrHistogramFactory gchisto, WindowPlan wins){
         Long maxvalue = 0l;
         for(String chr : wins.getChrList()){
+            if(!gchisto.hasChrHistogram(chr))
+                continue;
             for(Double d : gchisto.getChrHistogram(chr).retrieveRDBins())
                 if(d.longValue() > maxvalue)
                     maxvalue = d.longValue();
@@ -35,6 +37,8 @@ public class GaussianFitMeanStdev {
         Double[] bins = new Double[maxvalue.intValue() + 1];
         java.util.Arrays.fill(bins, 0.0d);
         for(String chr : wins.getChrList()){
+            if(!gchisto.hasChrHistogram(chr))
+                continue;
             for(Double d : gchisto.getChrHistogram(chr).retrieveRDBins())
                 bins[d.intValue()] += 1;
         }

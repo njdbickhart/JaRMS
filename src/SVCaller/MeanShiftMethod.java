@@ -46,19 +46,21 @@ public class MeanShiftMethod {
         //    workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
         //});
         ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".levels.tmp"));  
-        wins.getChrList().stream().forEach((chr) -> {
+        wins.getChrList().stream()
+                .filter(chr -> chisto.hasChrHistogram(chr))
+                .forEach((chr) -> {
         //workers.stream().forEach((chrHisto) -> {
-            try {
-                MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), rand, chr, range);
-                LevelHistogram c = shifter.call();
-                //LevelHistogram c = cHisto.get();
-                this.shiftedChrHistos.put(c.getChr(), c);
-            } catch (InterruptedException | ExecutionException ex) {
-                log.log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
-            } catch (Exception ex) {
-                log.log(Level.SEVERE, null, ex);
-            }
-        });
+                    try {
+                        MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), rand, chr, range);
+                        LevelHistogram c = shifter.call();
+                        //LevelHistogram c = cHisto.get();
+                        this.shiftedChrHistos.put(c.getChr(), c);
+                    } catch (InterruptedException | ExecutionException ex) {
+                        log.log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
+                    } catch (Exception ex) {
+                        log.log(Level.SEVERE, null, ex);
+                    }
+            });
         
         //executor.shutdown();
         //while(!executor.isTerminated()){}

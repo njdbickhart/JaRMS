@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // Merge all counts into a separate position count array for the bams
 // Calculate the GC percentage per chromosome
@@ -29,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Derek.Bickhart
  */
 public class ChrHistogramFactory {
+    private static final Logger log = Logger.getLogger(ChrHistogramFactory.class.getName());
     private final Map<String, ChrHistogram> histograms = new ConcurrentHashMap<>();
     
     public void processBamNoRG(String BamFile, WindowPlan wins, String tmpdir) throws Exception{
@@ -62,6 +65,7 @@ public class ChrHistogramFactory {
                 }
                 starts = wins.getStarts(chr);
                 ends = wins.getEnds(chr);
+                log.log(Level.FINEST, "Writing chr: " + prevChr + " to temp file...");
                 histograms.get(prevChr).writeToTemp();
                 prevChr = chr;
                 count = 0; curItr = 0;
@@ -93,6 +97,7 @@ public class ChrHistogramFactory {
         }
         if(curItr > 0){
             // Add final data to histogram if we've already loaded some data previously
+            log.log(Level.FINEST, "Writing last chr: " + prevChr + " to temp file...");
             histograms.get(prevChr).addHistogram(prevChr, starts[curItr], ends[curItr], (double) count);
             histograms.get(prevChr).writeToTemp();
         }
@@ -104,7 +109,9 @@ public class ChrHistogramFactory {
         }
         this.histograms.get(chr).addHistogram(chr, start, end, score);
     }
-    
+    public boolean hasChrHistogram(String chr){
+        return this.histograms.containsKey(chr);
+    }
     public ChrHistogram getChrHistogram(String chr){
         return this.histograms.get(chr);
     }

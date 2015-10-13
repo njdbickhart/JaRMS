@@ -128,6 +128,7 @@ public class ChrHistogram extends TempHistogram<Double>{
     }
     
     public double getSum(){
+        log.log(Level.FINEST, "Sum score for chr: " + this.chr + " " + this.sum);
         return this.sum;
     }
     

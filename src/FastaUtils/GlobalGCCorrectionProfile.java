@@ -102,8 +102,10 @@ public class GlobalGCCorrectionProfile {
             
             for(int n = 0; n < chisto.getNumEntries(); n++){
                 int gcidx = gchisto.getRoundedGC(n);
-                if(this.correction[gcidx] == -1)
+                if(this.correction[gcidx] == -1){
+                    log.log(Level.FINEST, "Skipping GC correction of gc bin: " + gcidx);
                     continue;
+                }
                 double score = chisto.getScore(n);
                 double correctval = this.correction[gcidx];
                 double correctedscore = score * correctval;

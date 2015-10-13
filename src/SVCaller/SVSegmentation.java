@@ -94,9 +94,12 @@ public class SVSegmentation {
         List<BedStats> FinalCalls = new ArrayList<>();
         for(String chr : wins.getChrList()){
         //for(Future<List<BedStats>> threadSegs : SegFutures){
+            if(!corrGC.hasChrHistogram(chr))
+                continue;
             try {
                 Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), meanShift.getChrLevels(chr), ttest, wins, chr, gausmean, gausstdev);
                 FinalCalls.addAll(segmentor.call());
+                log.log(Level.FINEST, "Segmenting corrected RD histo for : " + chr);
                 //FinalCalls.addAll(threadSegs.get());
             } catch (InterruptedException | ExecutionException ex) {
                 log.log(Level.SEVERE, "Error retrieving Threaded results!", ex);

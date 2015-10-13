@@ -78,14 +78,17 @@ public class CallMode {
         log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
         // Calculate global mean and SD RD prior to correction
         double rawSum = wins.getChrList().stream()
+                .filter(s -> rawRDHisto.hasChrHistogram(s))
                 .map(s -> rawRDHisto.getChrHistogram(s).getSum())
                 .reduce(0.0d, (a, b) -> a + b);
         int rawNumBins = wins.getChrList().stream()
+                .filter(s -> rawRDHisto.hasChrHistogram(s))
                 .map(s -> rawRDHisto.getChrHistogram(s).getNumEntries())
                 .reduce(0, (a, b) -> a + b);
         final double rawMean = rawSum / (double) rawNumBins;
         
         double rawSS = wins.getChrList().stream()
+                .filter(s -> rawRDHisto.hasChrHistogram(s))
                 .map(s -> rawRDHisto.getChrHistogram(s).getSumSquares(rawMean))
                 .reduce(0.0d, (a, b) -> a + b);
         rawSS /= rawNumBins - 1;
