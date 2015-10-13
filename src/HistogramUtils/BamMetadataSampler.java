@@ -59,7 +59,7 @@ public class BamMetadataSampler {
                 .collect(Collectors.toMap(s -> s.getKey(), 
                         (Map.Entry<String, Integer> s) -> { 
                             BAMIndexMetaData meta = index.getMetaData(head.getSequenceIndex(s.getKey()));
-                            if(meta.getUnalignedRecordCount() == 0)
+                            if(meta.getAlignedRecordCount() == 0)
                                 log.log(Level.FINE, "Found no aligned reads for chr: " + s.getKey());
                             return (meta.getAlignedRecordCount() + meta.getUnalignedRecordCount()) / (double) s.getValue();
                         }));
