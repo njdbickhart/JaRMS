@@ -50,7 +50,8 @@ public class GCWindowFactory {
     
     private void processFastaFile(WindowPlan wins){
         ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(this.tmpPath.toString() + ".gcprofile.tmp"));
-        try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.forName("UTF-8"))){
+        try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.defaultCharset())){
+            log.log(Level.FINEST, "Beginning fasta file processing");
             String line, prevChr = "NA";
             Integer[] starts = null, ends = null;
             int totalCount = 0, bpCount = 0, binIdx = 0, gcCount = 0;
@@ -58,8 +59,10 @@ public class GCWindowFactory {
                 if(line.startsWith(">")){
                     line = line.trim();
                     line = line.replaceAll(">", "");
-                    if(!wins.containsChr(line))
-                        throw new Exception("Error! Fasta file contains chromosome not found in bam: " + line);
+                    if(!wins.containsChr(line)){
+                        log.log(Level.WARNING, "Warning! Bam file either doesn't contain alignments from chr " + line + " or it is too small for analysis!");
+                        log.log(Level.WARNING, "Processing " + line + " regardless for GC content");
+                    }
 
                     this.histograms.put(line, new GCHistogram(line, rand));
                     if(prevChr.equals("NA")){
@@ -67,8 +70,12 @@ public class GCWindowFactory {
                         starts = wins.getStarts(line);
                         ends = wins.getEnds(line);
                     }else{
-                        this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
-                        this.histograms.get(prevChr).writeToTemp();
+                        log.log(Level.FINEST, "Writing GC percentage of chr: " + prevChr);
+                        if(binIdx < starts.length){
+                            // Avoids issue where the binIdx is too high because of exact multiple of window size for the fasta entry
+                            this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
+                            this.histograms.get(prevChr).writeToTemp();
+                        }
                         prevChr = line;
                         totalCount = 0; bpCount = 0; gcCount = 0; binIdx = 0;
                         starts = wins.getStarts(line);
@@ -98,6 +105,7 @@ public class GCWindowFactory {
         }catch(Exception ex){
             log.log(Level.SEVERE, "Error reading fasta file: " + this.fastaPath.toString(), ex);
         }
+        log.log(Level.INFO, "Created GC profiles for " + this.histograms.size() + " chromosomes.");
     }
     
     private double getGCPerc(int gcCount, int bpCount){
@@ -141,6 +149,7 @@ public class GCWindowFactory {
             rand.read(ints);
             
             int numchrs = IntUtils.byteArrayToInt(ints);
+            log.log(Level.FINEST, "Predicted " + numchrs + " number of chromosomes in GC profile");
             for(int i = 0; i < numchrs; i++){
                 rand.read(smInt);
                 int chrnamelen = IntUtils.byteArrayToInt(smInt);
@@ -150,7 +159,7 @@ public class GCWindowFactory {
                 String chrname = new String(chrs);
                 
                 if(!bamMeta.chrOrder.contains(chrname))
-                    throw new Exception("Error! Fasta file contains chr: " + chrname + " that is not found in BAM alignment!");
+                    log.log(Level.WARNING, "Warning! GC profile contains chr not found in bam file: " + chrname);
                 
                 rand.read(ints);
                 int numbins = IntUtils.byteArrayToInt(ints);
@@ -170,8 +179,8 @@ public class GCWindowFactory {
         try(RandomAccessFile rand = new RandomAccessFile(new File(this.expectedFastaProfile), "rw")){
             // Writing out top header!
             rand.write(7);
-            rand.write(IntUtils.Int32ToByteArray(bamMeta.chrOrder.size()));
-            for(String chr : bamMeta.chrOrder){
+            rand.write(IntUtils.Int32ToByteArray(this.histograms.size()));
+            for(String chr : this.histograms.keySet()){
                 GCHistogram gc = this.histograms.get(chr);
                 gc.transferToProfile(rand);
                 log.log(Level.INFO, "Finished writing to chr: " + chr);

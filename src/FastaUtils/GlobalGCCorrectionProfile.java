@@ -39,6 +39,8 @@ public class GlobalGCCorrectionProfile {
         
         // Now to loop through each chromosome
         for(String chr : bam.chrOrder){
+            if(!rd.hasChrHistogram(chr))
+                continue;
             ChrHistogram chisto = rd.getChrHistogram(chr);
             GCHistogram gchisto = gc.getGCHistogram(chr);
             
@@ -85,6 +87,8 @@ public class GlobalGCCorrectionProfile {
         ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".gccorr.tmp"));
         ChrHistogramFactory CorrectedRD = new ChrHistogramFactory();
         for(String chr : bam.chrOrder){
+            if(!rd.hasChrHistogram(chr))
+                continue;
             ChrHistogram chisto = rd.getChrHistogram(chr);
             GCHistogram gchisto = gc.getGCHistogram(chr);
             

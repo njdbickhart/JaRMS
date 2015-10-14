@@ -6,19 +6,28 @@
 package DataUtils;
 
 import HistogramUtils.BamMetadataSampler;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  *
  * @author Derek.Bickhart
  */
 public class WindowPlan {
+    private static final Logger log = Logger.getLogger(WindowPlan.class.getName());
     // diagram: chromosome -> ordered list of start coords
     private final Map<String, Integer[]> starts = new ConcurrentHashMap<>();
     private final Map<String, Integer[]> ends = new ConcurrentHashMap<>();
     private final Map<String, Integer> numBins = new ConcurrentHashMap<>();
+    private final Set<String> exclude = new HashSet<>();
     private int windowSize;
     private long GenomeSize;
     
@@ -41,33 +50,49 @@ public class WindowPlan {
             windowSize = 100;
         }
         
+        final List<String> exclude = new ArrayList<>();
         bam.chrOrder.stream().forEach((chr) -> {
             int binNums = 0;
             int chrlen = bam.chrLens.get(chr);
             int numIdx = (int) Math.ceil(chrlen / (double) windowSize);
+            // Account for especially small windows
+            if( chrlen % windowSize <= windowSize * 0.05)
+                numIdx--;
             
-            Integer[] start = new Integer[numIdx];
-            Integer[] end = new Integer[numIdx];
-            
-            int prevEnd = 0;
-            for(int x = 0; x < numIdx; x++){
-                start[x] = prevEnd;
-                int checkEnd = prevEnd + windowSize - 1;
-                if(checkEnd > chrlen){
-                    end[x] = chrlen;
-                }else{
-                    end[x] = checkEnd;
+            // If the number of windows is way too small to make any meaningful analysis, exclude the chromosome
+            if(numIdx < 3){
+                exclude.add(chr);
+            }else{
+                
+                Integer[] start = new Integer[numIdx];
+                Integer[] end = new Integer[numIdx];
+
+                int prevEnd = 0;
+                for(int x = 0; x < numIdx; x++){
+                    start[x] = prevEnd;
+                    int checkEnd = prevEnd + windowSize - 1;
+                    if(checkEnd > chrlen){
+                        end[x] = chrlen;
+                    }else{
+                        end[x] = checkEnd;
+                    }
+
+                    prevEnd += windowSize; 
+                    binNums++;
                 }
-                prevEnd += windowSize; 
+
+                starts.put(chr, start);
+                ends.put(chr, end);
                 binNums++;
+
+                this.numBins.put(chr, binNums);
             }
-            
-            starts.put(chr, start);
-            ends.put(chr, end);
-            binNums++;
-            
-            this.numBins.put(chr, binNums);
         });
+        
+        if(exclude.size() > 0){
+            log.log(Level.WARNING, "Warning! " + exclude.size() + " chromosomes were removed due to size constraints!");
+            
+        }
     }
     
     public int getBinStart(String chr, int binNum) throws Exception{
@@ -98,9 +123,17 @@ public class WindowPlan {
         return this.GenomeSize;
     }
     public Set<String> getChrList(){
-        return this.starts.keySet();
+        return this.starts.keySet().stream()
+                .filter(s -> !this.exclude.contains(s))
+                .collect(Collectors.toSet());
+    }
+    public Stream<String> getChrStream(){
+        return this.starts.keySet().stream()
+                .filter(s -> !this.exclude.contains(s));
     }
     public boolean containsChr(String chr){
+        if(this.exclude.contains(chr))
+            return false;
         return this.starts.containsKey(chr);
     }
 }

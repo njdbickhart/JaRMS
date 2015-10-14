@@ -56,12 +56,14 @@ public class ChrHistogramFactory {
             String chr = s.getReferenceName();
             if(!chr.equals(prevChr) && startL){                
                 // cleanup memory
-                histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
-                curItr++;
-                while(curItr < starts.length){
-                    // Account for empty bins at the end of the chromosome
-                    histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) 0.0d);
+                if(curItr != -1){
+                    histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
                     curItr++;
+                    while(curItr < starts.length){
+                        // Account for empty bins at the end of the chromosome
+                        histograms.get(prevChr).addHistogram(chr, starts[curItr], ends[curItr], (double) 0.0d);
+                        curItr++;
+                    }
                 }
                 starts = wins.getStarts(chr);
                 ends = wins.getEnds(chr);
@@ -80,14 +82,19 @@ public class ChrHistogramFactory {
             
             // TODO: Add in better logic for removing supplementary alignments and/or low MQ reads
             int mid = (s.getAlignmentEnd() + s.getAlignmentStart()) / 2;
+            if(curItr == -1){
+                continue;
+            }
             if(mid > ends[curItr]){
                 histograms.get(chr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
                 count = 0;
                 while(mid > ends[curItr]){
                     curItr++;
-                    if(curItr > ends.length)
-                        throw new Exception("Error! Bam file alignment inconsistent with Chromosome length: " + chr);
-                    else if (mid <= ends[curItr] && mid >= starts[curItr])
+                    if(curItr > ends.length){
+                        log.log(Level.FINEST, "Clipped end of chr: " + chr + "bin: " + curItr);
+                        curItr = -1;
+                        break;
+                    }else if (mid <= ends[curItr] && mid >= starts[curItr])
                         break;
                     // Add empty window -- the bam is sorted and there are no alignments in this window!
                     histograms.get(chr).addHistogram(chr, starts[curItr], ends[curItr], (double) count);
