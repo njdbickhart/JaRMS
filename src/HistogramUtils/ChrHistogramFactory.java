@@ -7,16 +7,19 @@ package HistogramUtils;
 
 // Collect read midpoint position count arrays for each bam
 
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadHistoFactory;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import htsjdk.samtools.DefaultSAMRecordFactory;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,21 +33,61 @@ import java.util.logging.Logger;
  *
  * @author Derek.Bickhart
  */
-public class ChrHistogramFactory {
+public class ChrHistogramFactory implements ThreadHistoFactory{
     private static final Logger log = Logger.getLogger(ChrHistogramFactory.class.getName());
     private final Map<String, ChrHistogram> histograms = new ConcurrentHashMap<>();
+    
+    private SamReader reader;
+    private WindowPlan wins;
+    private ThreadTempRandAccessFile tmp;
+    private Set<String> designatedChrs;
+    
+    public ChrHistogramFactory(){}
+    
+    public ChrHistogramFactory(SamReader reader, WindowPlan wins, ThreadTempRandAccessFile tmp){
+        this.reader = reader;
+        this.wins = wins;
+        this.tmp = tmp;
+    }
     
     public void processBamNoRG(String BamFile, WindowPlan wins, String tmpdir) throws Exception{
         Path BamPath = Paths.get(BamFile);
         Path tmp = Paths.get(tmpdir);
         
-        SamReader reader = SamReaderFactory.make()
+        HTSAlignmentIteration(BamPath, wins, tmp);
+    }
+    
+    private void HTSAlignmentIteration(Path BamPath, WindowPlan wins, Path tmp) throws IOException{
+        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmp.toString() + ".rdhisto.tmp"));
+        for(String chr : wins.getChrList()){
+            log.log(Level.INFO, "Getting RD alignments for chr: " + chr);
+            Integer[] starts = wins.getStarts(chr);
+            Integer[] ends = wins.getEnds(chr);
+            final double[] score = new double[starts.length];
+            for(int i = 0; i < score.length; i++){
+                score[i] = 0.0d;
+            }
+            SamReader reader = SamReaderFactory.make()
                 .validationStringency(ValidationStringency.LENIENT)
                 .samRecordFactory(DefaultSAMRecordFactory.getInstance())
                 .open(BamPath.toFile());
-        
-        
-        AlignmentIteration(reader, wins, tmp);
+            
+            reader.query(chr, starts[0] + 1, ends[ends.length - 1], true)
+                    .forEachRemaining(s -> {
+                        int mid = (s.getAlignmentEnd() + s.getAlignmentStart()) / 2;
+                        int bin = Math.floorDiv(mid, wins.getWindowSize());
+                        
+                        if(bin < score.length)
+                            score[bin] += 1.0d;
+                    });
+            
+            reader.close();
+            this.histograms.put(chr, new ChrHistogram(chr, rand));
+            for(int i = 0; i < score.length; i++){
+                this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
+            }
+            this.histograms.get(chr).writeToTemp();
+        }
     }
 
     private void AlignmentIteration(SamReader reader, WindowPlan wins, Path tmp) throws Exception {
@@ -132,6 +175,46 @@ public class ChrHistogramFactory {
     public void checkSumScores(){
         for(String chr : this.histograms.keySet()){
             this.histograms.get(chr).recalculateSumScore();
+        }
+    }
+
+    @Override
+    public void ProcessSpecificWorkload(Set<String> chrs) {
+        this.designatedChrs = chrs;
+    }
+
+    @Override
+    public void Consolidate(ThreadTempRandAccessFile rand) {
+        for(String chr : this.histograms.keySet()){
+            this.histograms.get(chr).TransferToSharedTemp(rand);
+        }
+        this.tmp.Close();
+    }
+
+    @Override
+    public void run() {
+        for(String chr : this.designatedChrs){
+            Integer[] starts = this.wins.getStarts(chr);
+            Integer[] ends = this.wins.getEnds(chr);
+            final double[] score = new double[starts.length];
+            for(int i = 0; i < score.length; i++){
+                score[i] = 0.0d;
+            }
+            
+            this.reader.query(chr, starts[0], ends[ends.length - 1], true)
+                    .forEachRemaining(s -> {
+                        int mid = (s.getAlignmentEnd() + s.getAlignmentStart()) / 2;
+                        int bin = Math.floorDiv(mid, this.wins.getWindowSize());
+                        
+                        if(bin < score.length)
+                            score[bin] += 1.0d;
+                    });
+            
+            this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
+            for(int i = 0; i < score.length; i++){
+                this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
+            }
+            this.histograms.get(chr).writeToTemp();
         }
     }
 }

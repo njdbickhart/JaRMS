@@ -5,7 +5,7 @@
  */
 package FastaUtils;
 
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;

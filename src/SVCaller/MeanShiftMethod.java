@@ -6,7 +6,7 @@
 package SVCaller;
 
 import DataUtils.BinCoords;
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;

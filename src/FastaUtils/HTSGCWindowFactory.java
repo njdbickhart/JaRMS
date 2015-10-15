@@ -5,7 +5,7 @@
  */
 package FastaUtils;
 
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import HistogramUtils.BamMetadataSampler;
 import TempFiles.binaryUtils.IntUtils;
@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 public class HTSGCWindowFactory extends GCWindowFactory{
     private static final Logger log = Logger.getLogger(HTSGCWindowFactory.class.getName());
     
+    private BamMetadataSampler bamMeta;
+    private WindowPlan wins;
     //private final Map<String, GCHistogram> histograms = new HashMap<>();
     //private final Path fastaPath;
     //private final Path tmpPath;
@@ -34,6 +36,12 @@ public class HTSGCWindowFactory extends GCWindowFactory{
         super(fastaFile, tmpdir);
         //this.fastaPath = Paths.get(fastaFile);
         //this.tmpPath = Paths.get(tmpdir);
+    }
+    
+    public HTSGCWindowFactory(String fastaFile, String tmpdir, BamMetadataSampler bamMeta, WindowPlan wins){
+        super(fastaFile, tmpdir);
+        this.bamMeta = bamMeta;
+        this.wins = wins;
     }
     
     @Override

@@ -5,7 +5,7 @@
  */
 package HistogramUtils;
 
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import TempFiles.binaryUtils.DoubleUtils;
 import TempFiles.binaryUtils.IntUtils;
 import java.io.IOException;

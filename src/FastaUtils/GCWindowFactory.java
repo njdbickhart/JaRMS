@@ -5,7 +5,7 @@
  */
 package FastaUtils;
 
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import HistogramUtils.BamMetadataSampler;
 import TempFiles.binaryUtils.IntUtils;

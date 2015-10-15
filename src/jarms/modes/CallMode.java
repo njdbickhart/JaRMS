@@ -5,6 +5,9 @@
  */
 package jarms.modes;
 
+import DataUtils.ThreadingUtils.ThreadDivisor;
+import DataUtils.ThreadingUtils.ThreadFactoryManager;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
 import FastaUtils.GCWindowFactory;
 import FastaUtils.GlobalGCCorrectionProfile;
@@ -14,9 +17,17 @@ import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogramFactory;
 import SVCaller.MeanShiftMethod;
 import SVCaller.SVSegmentation;
+import htsjdk.samtools.DefaultSAMRecordFactory;
+import htsjdk.samtools.SamReader;
+import htsjdk.samtools.SamReaderFactory;
+import htsjdk.samtools.ValidationStringency;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -67,6 +78,37 @@ public class CallMode {
         // Identify window plan
         WindowPlan wins = new WindowPlan();
         wins.GenerateWindows(metadata);
+        
+        //if(this.threads == 1)
+            SingleThreadRun(metadata, wins);
+        //else if(this.threads > 1)
+            //MultiThreadRun(metadata, wins);
+    }
+    
+    private void MultiThreadRun(BamMetadataSampler metadata, WindowPlan wins){
+        // Divide tasks
+        List<Set<String>> chrs = ThreadDivisor.EstimateThreadDivision(threads, metadata.chrOrder);
+        
+        // Create RD histograms
+        log.log(Level.FINE, "[CALLMODE] Starting RD histogram counting, multi-threaded");
+        Map<ChrHistogramFactory, Set<String>> rdworkers = new HashMap<>();
+        for(int i = 0; i < chrs.size(); i++){
+            SamReader reader = SamReaderFactory.make()
+                .validationStringency(ValidationStringency.LENIENT)
+                .samRecordFactory(DefaultSAMRecordFactory.getInstance())
+                .open(new File(bamFile));
+            ThreadTempRandAccessFile threadtemp = new ThreadTempRandAccessFile(Paths.get(outDir + "." + i + ".rdhisto.tmp"));
+            rdworkers.put(new ChrHistogramFactory(reader, wins, threadtemp), chrs.get(i));
+        }
+        ThreadTempRandAccessFile rdtemp = new ThreadTempRandAccessFile(Paths.get(outDir + ".rdhisto.tmp"));
+        ThreadFactoryManager rdManager = new ThreadFactoryManager(this.threads, rdtemp);
+        rdManager.RunThreads(rdworkers);
+        
+        log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
+        
+    }
+
+    private void SingleThreadRun(BamMetadataSampler metadata, WindowPlan wins) {
         
         // Create RD histograms
         log.log(Level.FINE, "[CALLMODE] Starting RD histogram counting");

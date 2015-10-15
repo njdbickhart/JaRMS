@@ -5,8 +5,9 @@
  */
 package HistogramUtils;
 
-import DataUtils.TempHistogram;
-import DataUtils.ThreadTempRandAccessFile;
+import DataUtils.ThreadingUtils.TempHistogram;
+import DataUtils.ThreadingUtils.ThreadHistogram;
+import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import TempFiles.binaryUtils.DoubleUtils;
 import TempFiles.binaryUtils.IntUtils;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.logging.Logger;
  *
  * @author Derek.Bickhart
  */
-public class ChrHistogram extends TempHistogram<Double>{
+public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogram{
     private static final Logger log = Logger.getLogger(ChrHistogram.class.getName());
     private double sum = 0.0d;
     
@@ -180,5 +181,23 @@ public class ChrHistogram extends TempHistogram<Double>{
                 log.log(Level.SEVERE, "Error reading bins from ChrHistogram temp file for chr: " + this.chr, ex);
             }
         }
+    }
+
+    @Override
+    public void TransferToSharedTemp(ThreadTempRandAccessFile rand) {
+        try{
+            byte[] ints = new byte[4];
+            byte[] dbls = new byte[8];
+            RandomAccessFile thisTemp = this.tempFile.getFileForReading(chr);
+            RandomAccessFile temp = rand.getFileForWriting(chr);
+            for(int x = 0; x < super.numEntries; x++){
+                temp.write(thisTemp.read(ints));
+                temp.write(thisTemp.read(ints));
+                temp.write(thisTemp.read(dbls));
+            }
+        }catch(IOException ex){
+            log.log(Level.SEVERE, "Error transfering ChrHistogram temp file for chr: " + this.chr, ex);
+        }
+        
     }
 }
