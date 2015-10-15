@@ -90,7 +90,7 @@ public class ChrHistogramFactory {
                 count = 0;
                 while(mid > ends[curItr]){
                     curItr++;
-                    if(curItr > ends.length){
+                    if(curItr >= ends.length){
                         log.log(Level.FINEST, "Clipped end of chr: " + chr + "bin: " + curItr);
                         curItr = -1;
                         break;
