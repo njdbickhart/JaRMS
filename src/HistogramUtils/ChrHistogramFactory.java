@@ -106,6 +106,12 @@ public class ChrHistogramFactory {
             // Add final data to histogram if we've already loaded some data previously
             log.log(Level.FINEST, "Writing last chr: " + prevChr + " to temp file...");
             histograms.get(prevChr).addHistogram(prevChr, starts[curItr], ends[curItr], (double) count);
+            curItr++;
+            while(curItr < starts.length){
+                // Account for empty bins at the end of the chromosome
+                histograms.get(prevChr).addHistogram(prevChr, starts[curItr], ends[curItr], (double) 0.0d);
+                curItr++;
+            }
             histograms.get(prevChr).writeToTemp();
         }
     }

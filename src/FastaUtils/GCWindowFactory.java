@@ -28,10 +28,10 @@ import java.util.logging.Logger;
 public class GCWindowFactory {
     private static final Logger log = Logger.getLogger(GCWindowFactory.class.getName());
     
-    private final Map<String, GCHistogram> histograms = new HashMap<>();
-    private final Path fastaPath;
-    private final Path tmpPath;
-    private String expectedFastaProfile;
+    protected final Map<String, GCHistogram> histograms = new HashMap<>();
+    protected final Path fastaPath;
+    protected final Path tmpPath;
+    protected String expectedFastaProfile;
 
     public GCWindowFactory(String fastaFile, String tmpdir){
         this.fastaPath = Paths.get(fastaFile);
@@ -53,15 +53,26 @@ public class GCWindowFactory {
         try(BufferedReader fasta = Files.newBufferedReader(fastaPath, Charset.defaultCharset())){
             log.log(Level.FINEST, "Beginning fasta file processing");
             String line, prevChr = "NA";
-            Integer[] starts = null, ends = null;
+            Integer[] starts = null, ends = null; 
+            boolean skip = false;
             int totalCount = 0, bpCount = 0, binIdx = 0, gcCount = 0;
             while((line = fasta.readLine()) != null){
                 if(line.startsWith(">")){
+                    skip = false;
                     line = line.trim();
                     line = line.replaceAll(">", "");
                     if(!wins.containsChr(line)){
                         log.log(Level.WARNING, "Warning! Bam file either doesn't contain alignments from chr " + line + " or it is too small for analysis!");
-                        log.log(Level.WARNING, "Processing " + line + " regardless for GC content");
+                        if(!prevChr.equals("NA")){
+                            if(binIdx < starts.length){
+                                // Avoids issue where the binIdx is too high because of exact multiple of window size for the fasta entry
+                                this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
+                                this.histograms.get(prevChr).writeToTemp();
+                            }
+                        }
+                        skip = true;
+                        prevChr = "NA";
+                        continue;
                     }
 
                     this.histograms.put(line, new GCHistogram(line, rand));
@@ -81,7 +92,7 @@ public class GCWindowFactory {
                         starts = wins.getStarts(line);
                         ends = wins.getEnds(line);
                     }
-                }else{
+                }else if(!skip){
                     line = line.trim();
                     for(int i = 0; i < line.length(); i++){
                         bpCount++; totalCount++;
@@ -92,6 +103,9 @@ public class GCWindowFactory {
                             case 'C':
                                 gcCount++;
                         }
+                        if(binIdx >= starts.length)
+                            // Account for those smaller than readable regions
+                            break;
                         if(bpCount >= wins.getWindowSize()){
                             this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
                             bpCount = 0; gcCount = 0;
@@ -101,7 +115,8 @@ public class GCWindowFactory {
                 }                
             }
             // Add the last window
-            this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
+            if(binIdx < starts.length)
+                this.histograms.get(prevChr).addHistogram(prevChr, starts[binIdx], ends[binIdx], this.getGCPerc(gcCount, bpCount));
         }catch(Exception ex){
             log.log(Level.SEVERE, "Error reading fasta file: " + this.fastaPath.toString(), ex);
         }
@@ -179,7 +194,8 @@ public class GCWindowFactory {
         try(RandomAccessFile rand = new RandomAccessFile(new File(this.expectedFastaProfile), "rw")){
             // Writing out top header!
             rand.write(7);
-            rand.write(IntUtils.Int32ToByteArray(this.histograms.size()));
+            Long validChrs = this.histograms.keySet().stream().filter(s -> this.histograms.get(s).getNumEntries() > 0).count();
+            rand.write(IntUtils.Int32ToByteArray(validChrs.intValue()));
             for(String chr : this.histograms.keySet()){
                 GCHistogram gc = this.histograms.get(chr);
                 gc.transferToProfile(rand);

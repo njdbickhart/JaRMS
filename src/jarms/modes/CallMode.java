@@ -8,6 +8,7 @@ package jarms.modes;
 import DataUtils.WindowPlan;
 import FastaUtils.GCWindowFactory;
 import FastaUtils.GlobalGCCorrectionProfile;
+import FastaUtils.HTSGCWindowFactory;
 import GetCmdOpt.SimpleModeCmdLineParser;
 import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogramFactory;
@@ -98,7 +99,7 @@ public class CallMode {
         
         // Generate GC correction scheme
         log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
-        GCWindowFactory GCWins = new GCWindowFactory(this.fastaFile, this.outDir);
+        HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, this.outDir);
         GCWins.generateGCProfile(metadata, wins);
         log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
         
