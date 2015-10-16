@@ -14,5 +14,5 @@ import java.util.Set;
 public interface ThreadHistoFactory extends Runnable{
     public void ProcessSpecificWorkload(Set<String> chrs);
     public void Consolidate(ThreadTempRandAccessFile rand);
-    
+    public void ResumeFromTempFile(ThreadTempRandAccessFile rand);
 }

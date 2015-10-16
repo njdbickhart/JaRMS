@@ -47,10 +47,6 @@ public class ThreadFactoryManager <T extends ThreadHistoFactory> {
         for(T factory : grouping.keySet()){
             factory.Consolidate(rand);
         }
-        try {
-            rand.printIndex();
-        } catch (IOException ex) {
-            log.log(Level.SEVERE, "Error printing index file!", ex);
-        }
+        rand.printIndex();
     }
 }

@@ -200,4 +200,8 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
         }
         
     }
+    
+    public void setNumEntries(int value){
+        this.numEntries = value;
+    }
 }

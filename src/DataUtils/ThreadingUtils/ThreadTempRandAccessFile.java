@@ -14,7 +14,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,6 +31,7 @@ import java.util.logging.Logger;
 public class ThreadTempRandAccessFile {
     private static final Logger log = Logger.getLogger(ThreadTempRandAccessFile.class.getName());
     private final Map<String, Long> chrPointer = new ConcurrentHashMap<>();
+    private final Map<String, Long> chrLength = new ConcurrentHashMap<>();
     private RandomAccessFile dataFile;
     private final Path indexFile;
     
@@ -44,6 +50,7 @@ public class ThreadTempRandAccessFile {
                 this.dataFile.seek(this.dataFile.length());
             }
             this.chrPointer.put(chr, this.dataFile.length());
+            
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Error preparing file for writing!", ex);
         }
@@ -60,12 +67,24 @@ public class ThreadTempRandAccessFile {
         return this.dataFile;
     }
     
-    public void printIndex() throws IOException{
+    public void printIndex() {
         try(BufferedWriter output = Files.newBufferedWriter(indexFile, Charset.defaultCharset())){
+            // Calculate chromosome long value length
+            Set<Entry<String, Long>> pointers = this.chrPointer.entrySet();
+            List<Entry<String, Long>> sortedSet = new ArrayList(pointers);
+            Collections.sort(sortedSet, (e1, e2) -> e1.getValue().compareTo(e2.getValue()));
+            
+            String firstchr = sortedSet.get(0).getKey();
+            long firstval = this.chrPointer.get(sortedSet.get(1).getKey());
+            this.chrLength.put(firstchr, firstval);
+            for(int i = 1; i < sortedSet.size() - 1; i++){
+                this.chrLength.put(sortedSet.get(i).getKey(), this.chrPointer.get(sortedSet.get(i+1).getKey()) - sortedSet.get(i).getValue());
+            }
+            this.chrLength.put(sortedSet.get(sortedSet.size() - 1).getKey(), this.dataFile.length() - sortedSet.get(sortedSet.size() - 1).getValue());
             this.chrPointer.entrySet().stream()
                     .forEach((s) -> {
                         try {
-                            output.write(s.getKey() + "\t" + s.getValue() + System.lineSeparator());
+                            output.write(s.getKey() + "\t" + s.getValue() + "\t" + this.chrLength.get(s.getKey()) + System.lineSeparator());
                         } catch (IOException ex) {
                             log.log(Level.SEVERE, "Error writing to index file!", ex);
                         }
@@ -75,13 +94,27 @@ public class ThreadTempRandAccessFile {
         }
     }
     
-    public void recoverFile() throws IOException{
+    public boolean CanResume(){
+        if(this.indexFile.toFile().canRead()){
+            try {
+                this.recoverFile();
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, "Failed to resume file: " + this.GetFileName(), ex);
+                return false;
+            }
+            return true;
+        }else
+            return false;
+    }
+    
+    private void recoverFile(){
         try(BufferedReader input = Files.newBufferedReader(indexFile, Charset.defaultCharset())){
             String line;
             while((line = input.readLine()) != null){
                 line = line.trim();
                 String[] segs = line.split("\t");
                 this.chrPointer.put(segs[0], Long.valueOf(segs[1]));
+                this.chrLength.put(segs[0], Long.valueOf(segs[2]));
             }
         }catch(IOException ex){
             log.log(Level.SEVERE, "Error recovering temp file from index: " + this.indexFile.toString(), ex);
@@ -100,5 +133,15 @@ public class ThreadTempRandAccessFile {
     
     public String GetFileName(){
         return this.indexFile.toString();
+    }
+    
+    public Set<String> getListChrs(){
+        return this.chrPointer.keySet();
+    }
+    
+    public long getChrLength(String chr){
+        if(this.chrLength.containsKey(chr))
+            return this.chrLength.get(chr);
+        else return 0l;
     }
 }

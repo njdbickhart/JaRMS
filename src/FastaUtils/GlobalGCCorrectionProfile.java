@@ -83,9 +83,9 @@ public class GlobalGCCorrectionProfile {
         // TODO: determine if population-based screening needs me to fill in all elements of the array
     }
     
-    public ChrHistogramFactory CorrectGC(Path tmpDir, BamMetadataSampler bam, ChrHistogramFactory rd, GCWindowFactory gc){
-        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".gccorr.tmp"));
-        ChrHistogramFactory CorrectedRD = new ChrHistogramFactory();
+    public ChrHistogramFactory CorrectGC(ThreadTempRandAccessFile rand, BamMetadataSampler bam, ChrHistogramFactory rd, GCWindowFactory gc){
+        
+        ChrHistogramFactory CorrectedRD = new ChrHistogramFactory(rand);
         for(String chr : bam.chrOrder){
             if(!rd.hasChrHistogram(chr))
                 continue;

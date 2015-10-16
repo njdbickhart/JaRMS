@@ -112,13 +112,19 @@ public class CallMode {
         
         // Create RD histograms
         log.log(Level.FINE, "[CALLMODE] Starting RD histogram counting");
-        ChrHistogramFactory rawRDHisto = new ChrHistogramFactory();
-        try {
-            rawRDHisto.processBamNoRG(bamFile, wins, outDir);
-        } catch (Exception ex) {
-            log.log(Level.SEVERE, "[CALLMODE] Error processing bam file!", ex);
+        ThreadTempRandAccessFile rawHistoRand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".rdhisto.tmp"));
+        ChrHistogramFactory rawRDHisto = new ChrHistogramFactory(rawHistoRand);
+        if(!rawHistoRand.CanResume()){
+            try {
+                rawRDHisto.processBamNoRG(bamFile, wins, outDir);
+            } catch (Exception ex) {
+                log.log(Level.SEVERE, "[CALLMODE] Error processing bam file!", ex);
+            }
+            log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
+            rawHistoRand.printIndex();
+        }else{
+            rawRDHisto.ResumeFromTempFile(rawHistoRand);
         }
-        log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
         // Calculate global mean and SD RD prior to correction
         double rawSum = wins.getChrStream()
                 .filter(s -> rawRDHisto.hasChrHistogram(s))
@@ -141,25 +147,28 @@ public class CallMode {
         
         // Generate GC correction scheme
         log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
-        HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, this.outDir);
+        ThreadTempRandAccessFile gcProfilerand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gcprofile.tmp"));
+        HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, gcProfilerand);
         GCWins.generateGCProfile(metadata, wins);
         log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
         
         // Create GC correction utility
+        ThreadTempRandAccessFile gcCorrRand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gccorr.tmp"));
         GlobalGCCorrectionProfile gccorrect = new GlobalGCCorrectionProfile();
         gccorrect.CalculationGCCorrectionValues(metadata, rawRDHisto, GCWins, rawMean);
         log.log(Level.FINE, "[CALLMODE] Corrected GC bias");
         
         // Correct GC
-        ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(Paths.get(this.outDir), metadata, rawRDHisto, GCWins);
+        ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(gcCorrRand, metadata, rawRDHisto, GCWins);
         
         // Check to see if we nee to recalculate the sum values for each GCCorrected entity
         gcCorrectRDHisto.checkSumScores();
         
         // Mean shift signal
         log.log(Level.FINE, "[CALLMODE] Beginning mean shift algorithm");
+        ThreadTempRandAccessFile levelRand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".levels.tmp"));
         MeanShiftMethod shifter = new MeanShiftMethod();
-        shifter.Partition(gcCorrectRDHisto, wins, Paths.get(this.outDir), 128, threads);
+        shifter.Partition(gcCorrectRDHisto, wins, levelRand, 128, threads);
         log.log(Level.FINE, "[CALLMODE] Ended mean shift algorithm");
         
         // Call SVs
@@ -169,7 +178,7 @@ public class CallMode {
         
         // Print out the calls and levels
         svCaller.printOutAllCalls();
-        svCaller.printOutCondensedLevels(shifter, wins);
+        svCaller.printOutCondensedLevels(shifter, wins, svCaller.getGlobalMean());
         
         // Clean up tmp files
         final File folder = new File(System.getProperty("user.dir"));

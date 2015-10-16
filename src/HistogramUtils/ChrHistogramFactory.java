@@ -42,7 +42,9 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
     private ThreadTempRandAccessFile tmp;
     private Set<String> designatedChrs;
     
-    public ChrHistogramFactory(){}
+    public ChrHistogramFactory(ThreadTempRandAccessFile tmp){
+        this.tmp = tmp;
+    }
     
     public ChrHistogramFactory(SamReader reader, WindowPlan wins, ThreadTempRandAccessFile tmp){
         this.reader = reader;
@@ -54,11 +56,11 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
         Path BamPath = Paths.get(BamFile);
         Path tmp = Paths.get(tmpdir);
         
-        HTSAlignmentIteration(BamPath, wins, tmp);
+        HTSAlignmentIteration(BamPath, wins);
     }
     
-    private void HTSAlignmentIteration(Path BamPath, WindowPlan wins, Path tmp) throws IOException{
-        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmp.toString() + ".rdhisto.tmp"));
+    private void HTSAlignmentIteration(Path BamPath, WindowPlan wins) throws IOException{
+        
         for(String chr : wins.getChrList()){
             log.log(Level.INFO, "Getting RD alignments for chr: " + chr);
             Integer[] starts = wins.getStarts(chr);
@@ -82,7 +84,7 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
                     });
             
             reader.close();
-            this.histograms.put(chr, new ChrHistogram(chr, rand));
+            this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
             for(int i = 0; i < score.length; i++){
                 this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
             }
@@ -215,6 +217,15 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
                 this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
             }
             this.histograms.get(chr).writeToTemp();
+        }
+    }
+
+    @Override
+    public void ResumeFromTempFile(ThreadTempRandAccessFile rand) {
+        for(String chr : this.tmp.getListChrs()){
+            this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
+            this.histograms.get(chr).setNumEntries((int) (this.tmp.getChrLength(chr) / 16));
+            this.histograms.get(chr).recalculateSumScore();
         }
     }
 }

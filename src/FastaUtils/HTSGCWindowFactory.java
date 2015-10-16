@@ -27,19 +27,22 @@ public class HTSGCWindowFactory extends GCWindowFactory{
     
     private BamMetadataSampler bamMeta;
     private WindowPlan wins;
+    private final ThreadTempRandAccessFile rand;
     //private final Map<String, GCHistogram> histograms = new HashMap<>();
     //private final Path fastaPath;
     //private final Path tmpPath;
     //private String expectedFastaProfile;
 
-    public HTSGCWindowFactory(String fastaFile, String tmpdir){
-        super(fastaFile, tmpdir);
+    public HTSGCWindowFactory(String fastaFile, ThreadTempRandAccessFile rand){
+        super(fastaFile, "temp");
         //this.fastaPath = Paths.get(fastaFile);
         //this.tmpPath = Paths.get(tmpdir);
+        this.rand = rand;
     }
     
-    public HTSGCWindowFactory(String fastaFile, String tmpdir, BamMetadataSampler bamMeta, WindowPlan wins){
-        super(fastaFile, tmpdir);
+    public HTSGCWindowFactory(String fastaFile, ThreadTempRandAccessFile rand, BamMetadataSampler bamMeta, WindowPlan wins){
+        super(fastaFile, "temp");
+        this.rand = rand;
         this.bamMeta = bamMeta;
         this.wins = wins;
     }
@@ -61,7 +64,7 @@ public class HTSGCWindowFactory extends GCWindowFactory{
     }
     
     private void processFastaFile(WindowPlan wins){
-        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(this.tmpPath.toString() + ".gcprofile.tmp"));
+        
         ReferenceSequenceFile refFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(this.fastaPath.toFile());
         
         for(String chr : wins.getChrList()){
@@ -120,34 +123,33 @@ public class HTSGCWindowFactory extends GCWindowFactory{
     private void generateGCHistoFromProfile(BamMetadataSampler bamMeta){
         // Load existing GC profile and transfer to histogram class
         log.log(Level.INFO, "Loading previously generated GC profile");
-        ThreadTempRandAccessFile randprofile = new ThreadTempRandAccessFile(Paths.get(this.tmpPath.toString() + ".gcprofile.tmp"));
-        try(RandomAccessFile rand = new RandomAccessFile(new File(this.expectedFastaProfile), "r")){
+        try(RandomAccessFile trand = new RandomAccessFile(new File(this.expectedFastaProfile), "r")){
             // Get the top header
-            byte magic = rand.readByte();
+            byte magic = trand.readByte();
             byte[] ints = new byte[4];
             byte[] smInt = new byte[2];
             if(magic != 7)
                 throw new Exception("Oops! The GC profile file might be corrupted!");
             
-            rand.read(ints);
+            trand.read(ints);
             
             int numchrs = IntUtils.byteArrayToInt(ints);
             log.log(Level.FINEST, "Predicted " + numchrs + " number of chromosomes in GC profile");
             for(int i = 0; i < numchrs; i++){
-                rand.read(smInt);
+                trand.read(smInt);
                 int chrnamelen = IntUtils.byteArrayToInt(smInt);
                 
                 byte[] chrs = new byte[chrnamelen];
-                rand.read(chrs);
+                trand.read(chrs);
                 String chrname = new String(chrs);
                 
                 if(!bamMeta.chrOrder.contains(chrname))
                     log.log(Level.WARNING, "Warning! GC profile contains chr not found in bam file: " + chrname);
                 
-                rand.read(ints);
+                trand.read(ints);
                 int numbins = IntUtils.byteArrayToInt(ints);
-                this.histograms.put(chrname, new GCHistogram(chrname, randprofile));
-                this.histograms.get(chrname).transferFromProfile(rand, numbins);
+                this.histograms.put(chrname, new GCHistogram(chrname, this.rand));
+                this.histograms.get(chrname).transferFromProfile(trand, numbins);
                 log.log(Level.FINEST, "Loaded GC profile from chr: " + chrname);
             }
         }catch(Exception ex){

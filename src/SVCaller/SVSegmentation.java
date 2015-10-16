@@ -42,6 +42,7 @@ public class SVSegmentation {
     private List<BedStats> StoredCalls;
     
     private final Path outfile;
+    private double GlobalMean;
     //private final List<BedStats> CNVCalls = new ArrayList<>();
     
     public SVSegmentation(String outDir){
@@ -70,6 +71,7 @@ public class SVSegmentation {
         fitter.CalculateGlobalMeanStdev(corrGC, wins);
         double gausmean = fitter.getMean();
         double gausstdev = fitter.getStdev();
+        this.GlobalMean = gausmean;
         log.log(Level.INFO, "GC corrected, global mean-> " + gausmean + " and Stdev-> " + gausstdev);
         
         // Process chromosomes
@@ -122,7 +124,7 @@ public class SVSegmentation {
         }
     }
     
-    public void printOutCondensedLevels(MeanShiftMethod meanShift, WindowPlan wins){
+    public void printOutCondensedLevels(MeanShiftMethod meanShift, WindowPlan wins, double GlobalMean){
         try(BufferedWriter out = Files.newBufferedWriter(Paths.get(outfile.toString() + ".levels"), Charset.defaultCharset())){
             for(String chr : wins.getChrList()){
                 int bs = 0, be = 0;
@@ -133,7 +135,8 @@ public class SVSegmentation {
                     if(levels[i] != curlevel || i == levels.length - 1){
                         int truestart = bs * wins.getWindowSize() + 1;
                         int trueend = (be + 1) * wins.getWindowSize() + 1;
-                        out.write(chr + "\t" + truestart + "\t" + trueend + "\t" + curlevel + System.lineSeparator());
+                        double ratio = curlevel / GlobalMean;
+                        out.write(chr + "\t" + truestart + "\t" + trueend + "\t" + ratio + System.lineSeparator());
                         bs  = i; be = i;
                         curlevel = levels[i];
                     }else{
@@ -367,5 +370,9 @@ public class SVSegmentation {
                 }
             }
         }
+    }
+    
+    public double getGlobalMean(){
+        return this.GlobalMean;
     }
 }

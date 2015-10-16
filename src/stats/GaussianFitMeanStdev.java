@@ -10,6 +10,8 @@ import HistogramUtils.ChrHistogramFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.math3.fitting.GaussianCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 
@@ -18,6 +20,8 @@ import org.apache.commons.math3.fitting.WeightedObservedPoints;
  * @author Derek.Bickhart
  */
 public class GaussianFitMeanStdev {
+    private static Logger log = Logger.getLogger(GaussianFitMeanStdev.class.getName());
+    
     GaussianCurveFitter fitter = GaussianCurveFitter.create();
     private double fmean = 0.0d;
     private double fstdev = 0.0d;
@@ -26,12 +30,19 @@ public class GaussianFitMeanStdev {
     
     public void CalculateGlobalMeanStdev(ChrHistogramFactory gchisto, WindowPlan wins){
         Long maxvalue = 0l;
+        int count = 0;
         for(String chr : wins.getChrList()){
             if(!gchisto.hasChrHistogram(chr))
                 continue;
-            for(Double d : gchisto.getChrHistogram(chr).retrieveRDBins())
+            for(Double d : gchisto.getChrHistogram(chr).retrieveRDBins()){
+                count++;
                 if(d.longValue() > maxvalue)
                     maxvalue = d.longValue();
+            }
+        }
+        if(count < 3 || maxvalue.intValue() < 3){
+            log.log(Level.SEVERE, "Error! Could not calculate Global Mean and Stdev! Count: " + count + " maxvalue: " + maxvalue);
+            System.exit(-1);
         }
         
         Double[] bins = new Double[maxvalue.intValue() + 1];
@@ -61,6 +72,12 @@ public class GaussianFitMeanStdev {
     
     public void CalculateMeanStdev(double[] values){
         Long maxvalue = 0l;
+        if(values.length < 3){
+            log.log(Level.WARNING, "Mean/Stdev calculation had " + values.length + "initial observations! Doing simple estimate");
+            this.mean = StdevAvg.DoubleAvg(values);
+            this.stdev = StdevAvg.stdevDBL(this.mean, values);
+            return;
+        }
         for(Double d : values){
             if(Math.round(d) > maxvalue)
                 maxvalue = d.longValue();
@@ -83,6 +100,11 @@ public class GaussianFitMeanStdev {
         
         Double mincut = parameters[1] - 2.0d * parameters[2];
         Double maxcut = parameters[1] + 2.0d * parameters[2];
+        
+        if(maxcut - mincut < 3 || mincut < 0 || maxcut < 0){
+            log.log(Level.WARNING, "Mean/Stdev calculation had " + mincut + " and " + maxcut + "! Not cropping values");
+            return;
+        }
         //java.util.Arrays.fill(bins, 0.0d);
         obs = new WeightedObservedPoints();
         for(int i = mincut.intValue(); i < maxcut.intValue(); i++){

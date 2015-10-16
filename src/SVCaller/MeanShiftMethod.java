@@ -38,14 +38,14 @@ public class MeanShiftMethod {
     private static final Logger log = Logger.getLogger(MeanShiftMethod.class.getName());
     private final Map<String, LevelHistogram> shiftedChrHistos = new ConcurrentHashMap<>();
     
-    public void Partition(ChrHistogramFactory chisto, WindowPlan wins, Path tmpDir, int range, int threads){
+    public void Partition(ChrHistogramFactory chisto, WindowPlan wins, ThreadTempRandAccessFile rand, int range, int threads){
         TDistributionFunction ttest = new TDistributionFunction(wins.getWindowSize());
         ExecutorService executor = Executors.newFixedThreadPool(threads);
         final List<Future<LevelHistogram>> workers = new ArrayList<>();
         //wins.getChrList().stream().forEach((chr) -> {
         //    workers.add(executor.submit(new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), tmpDir, chr, range)));
         //});
-        ThreadTempRandAccessFile rand = new ThreadTempRandAccessFile(Paths.get(tmpDir.toString() + ".levels.tmp"));  
+          
         wins.getChrStream()
                 .filter(chr -> chisto.hasChrHistogram(chr))
                 .forEach((chr) -> {
