@@ -158,7 +158,7 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
     }
     
     public void recalculateSumScore(){
-        if(Double.isNaN(sum)){
+        if(Double.isNaN(sum) || this.sum == 0.0d){
             try{
                 RandomAccessFile rand = this.tempFile.getFileForReading(chr);
                 if(this.numEntries <= 0)

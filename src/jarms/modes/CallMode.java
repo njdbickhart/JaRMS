@@ -163,6 +163,7 @@ public class CallMode {
         
         // Check to see if we nee to recalculate the sum values for each GCCorrected entity
         gcCorrectRDHisto.checkSumScores();
+        gcCorrRand.printIndex();
         
         // Mean shift signal
         log.log(Level.FINE, "[CALLMODE] Beginning mean shift algorithm");

@@ -60,7 +60,7 @@ public class WindowPlan {
                 numIdx--;
             
             // If the number of windows is way too small to make any meaningful analysis, exclude the chromosome
-            if(numIdx < 3){
+            if(numIdx < 15){
                 exclude.add(chr);
             }else{
                 

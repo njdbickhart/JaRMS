@@ -120,16 +120,16 @@ public class MeanShiftMethod {
                 for (int b = 0;b < this.rdBins.length; b++) 
                     if (!mask[b]) level[b] = rdBins[b];
 
-                CalcLevels(level, mask, bin_band, mean, sigma);
+                level = CalcLevels(level, mask, bin_band, mean, sigma);
 
-                CalcLevels(level, mask, bin_band, mean, sigma);
+                level = CalcLevels(level, mask, bin_band, mean, sigma);
 
-                CalcLevels(level, mask, bin_band, mean, sigma);
+                level = CalcLevels(level, mask, bin_band, mean, sigma);
 
                 
-                UpdateMask(level, mask, mean, sigma);
+                mask = UpdateMask(level, mask, mean, sigma);
                 
-
+                
                 if (bin_band >=   8) bin_band +=  1;
                 if (bin_band >=  16) bin_band +=  2;
                 if (bin_band >=  32) bin_band +=  4;
@@ -137,6 +137,11 @@ public class MeanShiftMethod {
                 if (bin_band >= 128) bin_band += 16;
                 if (bin_band >= 256) bin_band += 32;
                 if (bin_band >= 512) bin_band += 64;
+                
+                if(bin_band * 3 > this.rdBins.length){
+                    log.log(Level.FINE, "Bin size limit reached for chr: " + this.chr);
+                    break; // Avoid increasing the bin_band size over the length of this contig!
+                }
             }
             // Create chromosome histogram and return
             for(int i = 0; i < level.length; i++){
@@ -146,7 +151,7 @@ public class MeanShiftMethod {
             return shifted;
         }
         
-        private void UpdateMask(double[] level, boolean[] mask, double mean, double sigma){
+        private boolean[] UpdateMask(double[] level, boolean[] mask, double mean, double sigma){
             for (int b = 0;b < this.rdBins.length; b++) mask[b] = false;
 
             int ln = 0,n = 0,rn = 0;
@@ -211,6 +216,7 @@ public class MeanShiftMethod {
                 for (int b = curRange.start; b <= curRange.end; b++) 
                     mask[b] = true;
             }
+            return mask;
         }
         
         private BinCoords getRegionRight(double[] level, int bin, BinCoords range){
@@ -250,7 +256,7 @@ public class MeanShiftMethod {
             return Math.abs(t - l) < 0.01d;
         }
         
-        private void CalcLevels(double[] level, boolean[] mask, int bin_band, double mean, double sigma){
+        private double[] CalcLevels(double[] level, boolean[] mask, int bin_band, double mean, double sigma){
             double[] grad_b = new double[this.rdBins.length];
             for (int b = 0;b < this.rdBins.length;b++) 
                 grad_b[b] = 0;
@@ -317,6 +323,7 @@ public class MeanShiftMethod {
                 for (int i = b_start;i <= b_stop;i++) 
                     if (!mask[i]) level[i] = nl;
             }
+            return level;
         }
         
         private double getInverse(int n){
