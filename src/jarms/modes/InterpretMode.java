@@ -51,7 +51,8 @@ public class InterpretMode {
         log.log(Level.FINE, "[INTERPRET] Starting RD histogram resumption");
         ThreadTempRandAccessFile HistoRand = new ThreadTempRandAccessFile(Paths.get(this.binary.getPath()));
         ChrHistogramFactory RDHisto = new ChrHistogramFactory(HistoRand);
-        if(!HistoRand.CanResume()){
+        if(HistoRand.CanResume()){
+            RDHisto.ResumeFromTempFile(HistoRand);
             try (BufferedWriter outfile = Files.newBufferedWriter(output, Charset.defaultCharset())){
                 RDHisto.PrintWindowsFromTempFile(outfile);
             } catch (Exception ex) {
