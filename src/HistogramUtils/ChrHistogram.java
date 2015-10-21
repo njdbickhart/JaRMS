@@ -10,6 +10,7 @@ import DataUtils.ThreadingUtils.ThreadHistogram;
 import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import TempFiles.binaryUtils.DoubleUtils;
 import TempFiles.binaryUtils.IntUtils;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
@@ -199,6 +200,22 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
             log.log(Level.SEVERE, "Error transfering ChrHistogram temp file for chr: " + this.chr, ex);
         }
         
+    }
+    
+    public void WriteOutText(BufferedWriter output) throws IOException{        
+        byte[] ints = new byte[4];
+        byte[] dbls = new byte[8];
+        RandomAccessFile thisTemp = this.tempFile.getFileForReading(chr);
+        for(int x = 0; x < super.numEntries; x++){
+            thisTemp.read(ints);
+            int tstart = IntUtils.byteArrayToInt(ints);
+            thisTemp.read(ints);
+            int tend = IntUtils.byteArrayToInt(ints);
+            thisTemp.read(dbls);
+            double tscore = DoubleUtils.BytetoDouble(dbls);
+            
+            output.write(this.chr + "\t" + tstart + "\t" + tend + "\t" + tscore + System.lineSeparator());
+        }
     }
     
     public void setNumEntries(int value){

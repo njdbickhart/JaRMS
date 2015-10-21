@@ -15,7 +15,9 @@ import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -226,6 +228,17 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
             this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
             this.histograms.get(chr).setNumEntries((int) (this.tmp.getChrLength(chr) / 16));
             this.histograms.get(chr).recalculateSumScore();
+        }
+    }
+    
+    public void PrintWindowsFromTempFile(BufferedWriter output){
+        for(String chr : this.tmp.getListChrs()){
+            if(this.histograms.containsKey(chr))
+                try {
+                    this.histograms.get(chr).WriteOutText(output);
+                } catch (IOException ex) {
+                    log.log(Level.SEVERE, "Error writing text output for chr: " + chr, ex);
+                }
         }
     }
 }

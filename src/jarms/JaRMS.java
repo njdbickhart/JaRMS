@@ -9,6 +9,7 @@ import GetCmdOpt.SimpleModeCmdLineParser;
 import jarms.logger.ConsoleFormat;
 import jarms.logger.LogFormat;
 import jarms.modes.CallMode;
+import jarms.modes.InterpretMode;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -24,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.4";
+    private static final String version = "0.0.5";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**
@@ -49,6 +50,11 @@ public class JaRMS {
                 log.log(Level.FINE, "[MAIN] JaRMS call mode selected.");
                 CallMode cluster = new CallMode(cmd);
                 cluster.run();
+                break;
+            case "interpret":
+                log.log(Level.FINE, "[MAIN] JaRMS interpret mode selected.");
+                InterpretMode interpret = new InterpretMode(cmd);
+                interpret.run();
                 break;
             default:
                 System.err.println("Error! Must designate a usage mode!");
@@ -80,6 +86,16 @@ public class JaRMS {
                 "ifo", 
                 "ifotd", 
                 "input", "fasta", "outbase", "threads", "debug");
+        
+        cmd.AddMode("interpret", 
+                "JaRMS interpret mode" + nl +
+                "Usage: java -jar JaRMS.jar interpret [-i binary file -o output text file]" + nl
+                + "\t-i\tInput, indexed, binary file" + nl
+                + "\t-o\tOutput bed file text" + nl, 
+                "i:o:", 
+                "io", 
+                "io", 
+                "input", "output");
         
         return cmd;
     }
