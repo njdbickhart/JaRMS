@@ -37,7 +37,9 @@ public class JaRMS {
         cmd.GetAndCheckMode(args);
         
         // Set loggers and basic command options
-        boolean debug = cmd.GetValue("debug").equals("true");
+        boolean debug = false;
+        if(cmd.HasOpt("debug"))
+            debug = cmd.GetValue("debug").equals("true");
         setFileHandler(cmd.CurrentMode, args, debug);
         log.log(Level.INFO, "[MAIN] JaRMS version: " + version);
         String workingDir = System.getProperty("user.dir");
