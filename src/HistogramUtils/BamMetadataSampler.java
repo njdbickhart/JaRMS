@@ -72,6 +72,6 @@ public class BamMetadataSampler {
                 .reduce(0, (a, b) -> (a + b));
         totalXCov /= totalGenomeSize;
         
-        log.log(Level.INFO, "BAM metadata stats: #chrs: " + this.chrOrder.size() + " avg X coverage: " + totalXCov);
+        log.log(Level.INFO, "BAM metadata stats: genome size : " + totalGenomeSize + " #chrs: " + this.chrOrder.size() + " avg X coverage: " + totalXCov);
     }
 }

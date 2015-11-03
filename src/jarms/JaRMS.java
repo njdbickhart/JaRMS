@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.5";
+    private static final String version = "0.0.6";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**
@@ -73,7 +73,8 @@ public class JaRMS {
                 + "Version: " + version + nl
             + "Usage: java -jar JaRMS.jar [mode] [mode specific options]" + nl
                 + "Modes:" + nl
-                + "\tcall\tCalls CNVs from BAM file" + nl,
+                + "\tcall\tCalls CNVs from BAM file" + nl
+                + "\tinterpret\tCreates tab files from binary temp storage" + nl,
                 "call"
         );
         
@@ -83,11 +84,12 @@ public class JaRMS {
                 + "\t-i\tA BWA-processed bam file for processing" + nl
                 + "\t-f\tThe reference genome fasta file that was used during alignment of the bam file" + nl
                 + "\t-o\tOutput file prefix and directory" + nl
-                + "\t-t\tNumber of threads to use [optional: use one thread]" + nl,
-                "i:f:o:t:d|", 
+                + "\t-t\tNumber of threads to use [optional: use one thread]" + nl
+                + "\t-w\tUse this window siez [optional: determine from BAM read depth]" + nl,
+                "i:f:o:t:w:d|", 
                 "ifo", 
-                "ifotd", 
-                "input", "fasta", "outbase", "threads", "debug");
+                "ifotwd", 
+                "input", "fasta", "outbase", "threads", "window", "debug");
         
         cmd.AddMode("interpret", 
                 "JaRMS interpret mode" + nl +

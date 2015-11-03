@@ -42,6 +42,7 @@ public class CallMode {
     private final String bamFile;
     private final String outDir;
     private final String fastaFile;
+    private int OverrideWinSize = -1;
     private int threads = 1;
 
     public CallMode(SimpleModeCmdLineParser cmd) {
@@ -66,6 +67,9 @@ public class CallMode {
             ErrorExit(cmd.GetValue("fasta"));
         }
         
+        if(cmd.HasOpt("window"))
+            this.OverrideWinSize = Integer.parseInt(cmd.GetValue("window"));
+        
         if(cmd.HasOpt("threads"))
             this.threads = Integer.parseInt(cmd.GetValue("threads"));
     }
@@ -77,7 +81,7 @@ public class CallMode {
         
         // Identify window plan
         WindowPlan wins = new WindowPlan();
-        wins.GenerateWindows(metadata);
+        wins.GenerateWindows(metadata, this.OverrideWinSize);
         
         //if(this.threads == 1)
             SingleThreadRun(metadata, wins);

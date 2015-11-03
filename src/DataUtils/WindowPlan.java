@@ -31,7 +31,7 @@ public class WindowPlan {
     private int windowSize;
     private long GenomeSize;
     
-    public void GenerateWindows(BamMetadataSampler bam){
+    public void GenerateWindows(BamMetadataSampler bam, int OverrideWinSize){
         this.GenomeSize = bam.chrLens.values().stream()
                 .reduce(0, (a, b) -> a + b);
         
@@ -42,12 +42,17 @@ public class WindowPlan {
                 .average()
                 .getAsDouble();
         
-        // TODO: Make window size more dynamic dependent on read length and coverage
         windowSize = 0;
-        if(fullXCov < 6.0d){
-            windowSize = 500;
+        if(OverrideWinSize > 0){
+            windowSize = OverrideWinSize;
+            log.log(Level.INFO, "Setting window size to user specified: " + OverrideWinSize);
         }else{
-            windowSize = 100;
+        // TODO: Make window size more dynamic dependent on read length and coverage
+            if(fullXCov < 6.0d){
+                windowSize = 500;
+            }else{
+                windowSize = 100;
+            }
         }
         
         final List<String> exclude = new ArrayList<>();
