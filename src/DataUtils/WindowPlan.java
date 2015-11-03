@@ -33,7 +33,7 @@ public class WindowPlan {
     
     public void GenerateWindows(BamMetadataSampler bam, int OverrideWinSize){
         this.GenomeSize = bam.chrLens.values().stream()
-                .reduce(0, (a, b) -> a + b);
+                .reduce(0l, (a, b) -> a + b);
         
         // For now, I'm going to pretend that there is no difference among sex chromosomes
         // TODO: Implement sex-specific chromosome counts
@@ -58,7 +58,7 @@ public class WindowPlan {
         final List<String> exclude = new ArrayList<>();
         bam.chrOrder.stream().forEach((chr) -> {
             int binNums = 0;
-            int chrlen = bam.chrLens.get(chr);
+            long chrlen = bam.chrLens.get(chr);
             int numIdx = (int) Math.ceil(chrlen / (double) windowSize);
             // Account for especially small windows
             if( chrlen % windowSize <= windowSize * 0.05)
@@ -77,7 +77,14 @@ public class WindowPlan {
                     start[x] = prevEnd;
                     int checkEnd = prevEnd + windowSize - 1;
                     if(checkEnd > chrlen){
-                        end[x] = chrlen;
+                        end[x] = (int)chrlen;
+                        try {
+                            if (end[x] < 0) {
+                                throw new Exception("Error converting chromosome length long value to integer!");
+                            }
+                        } catch (Exception exception) {
+                            log.log(Level.SEVERE, "Error getting chromosome end!", exception);
+                        }
                     }else{
                         end[x] = checkEnd;
                     }

@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class BamMetadataSampler {
     private static final Logger log = Logger.getLogger(BamMetadataSampler.class.getName());
-    public Map<String, Integer> chrLens;
+    public Map<String, Long> chrLens;
     public Map<String, Double> chrXCov;
     public Set<String> chrOrder;
     private final Path bamFile;
@@ -46,7 +46,7 @@ public class BamMetadataSampler {
         final SAMFileHeader head = reader.getFileHeader();
         
         this.chrLens = head.getSequenceDictionary().getSequences().stream()
-                .collect(Collectors.toMap(s -> s.getSequenceName(), s -> s.getSequenceLength()));
+                .collect(Collectors.toMap(s -> s.getSequenceName(), s -> (long)s.getSequenceLength()));
         
         this.chrOrder = head.getSequenceDictionary().getSequences().stream()
                 .sequential()
@@ -57,7 +57,7 @@ public class BamMetadataSampler {
         
         this.chrXCov = chrLens.entrySet().stream()
                 .collect(Collectors.toMap(s -> s.getKey(), 
-                        (Map.Entry<String, Integer> s) -> { 
+                        (Map.Entry<String, Long> s) -> { 
                             BAMIndexMetaData meta = index.getMetaData(head.getSequenceIndex(s.getKey()));
                             if(meta.getAlignedRecordCount() == 0)
                                 log.log(Level.FINE, "Found no aligned reads for chr: " + s.getKey());
@@ -67,9 +67,9 @@ public class BamMetadataSampler {
         double totalXCov = this.chrXCov.entrySet().stream()
                 .map(s -> s.getValue())
                 .reduce(0.0d, (a, b) -> (a + b));
-        int totalGenomeSize = this.chrLens.entrySet().stream()
+        long totalGenomeSize = this.chrLens.entrySet().stream()
                 .map(s -> s.getValue())
-                .reduce(0, (a, b) -> (a + b));
+                .reduce(0l, (a, b) -> (a + b));
         totalXCov /= totalGenomeSize;
         
         log.log(Level.INFO, "BAM metadata stats: genome size : " + totalGenomeSize + " #chrs: " + this.chrOrder.size() + " avg X coverage: " + totalXCov);
