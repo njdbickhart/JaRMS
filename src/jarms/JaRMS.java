@@ -5,7 +5,7 @@
  */
 package jarms;
 
-import GetCmdOpt.SimpleModeCmdLineParser;
+import GetCmdOpt.ArrayModeCmdLineParser;
 import jarms.logger.ConsoleFormat;
 import jarms.logger.LogFormat;
 import jarms.modes.CallMode;
@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.6";
+    private static final String version = "0.0.7";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**
@@ -33,7 +33,7 @@ public class JaRMS {
      */
     public static void main(String[] args) {
         // Prepare and read command line options
-        SimpleModeCmdLineParser cmd = PrepareCMDOptions();        
+        ArrayModeCmdLineParser cmd = PrepareCMDOptions();        
         cmd.GetAndCheckMode(args);
         
         // Set loggers and basic command options
@@ -67,9 +67,9 @@ public class JaRMS {
         log.log(Level.INFO, "[MAIN] Finished mode: " + cmd.CurrentMode);
         System.exit(0);
     }
-    private static SimpleModeCmdLineParser PrepareCMDOptions(){
+    private static ArrayModeCmdLineParser PrepareCMDOptions(){
         String nl = System.lineSeparator();
-        SimpleModeCmdLineParser cmd = new SimpleModeCmdLineParser("JaRMS\tA Java implementation of Mean-Shift RD signal decomposition" + nl
+        ArrayModeCmdLineParser cmd = new ArrayModeCmdLineParser("JaRMS\tA Java implementation of Mean-Shift RD signal decomposition" + nl
                 + "Version: " + version + nl
             + "Usage: java -jar JaRMS.jar [mode] [mode specific options]" + nl
                 + "Modes:" + nl
@@ -81,12 +81,12 @@ public class JaRMS {
         cmd.AddMode("call", 
                 "JaRMS call mode" + nl +
                 "Usage: java -jar JaRMS.jar cluster [-i bamfile -f fasta file -o output prefix] (option: -t number of threads)" + nl
-                + "\t-i\tA BWA-processed bam file for processing" + nl
+                + "\t-i\tOne or more BWA-processed bam files for processing" + nl
                 + "\t-f\tThe reference genome fasta file that was used during alignment of the bam file" + nl
                 + "\t-o\tOutput file prefix and directory" + nl
                 + "\t-t\tNumber of threads to use [optional: use one thread]" + nl
                 + "\t-w\tUse this window siez [optional: determine from BAM read depth]" + nl,
-                "i:f:o:t:w:d|", 
+                "i-f:o:t:w:d|", 
                 "ifo", 
                 "ifotwd", 
                 "input", "fasta", "outbase", "threads", "window", "debug");

@@ -17,9 +17,9 @@ import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,6 +52,56 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
         this.reader = reader;
         this.wins = wins;
         this.tmp = tmp;
+    }
+    
+    public void processMultipleBamNoRG(List<String> BamFiles, WindowPlan wins, String tmpdir) throws Exception{
+        boolean start = true;
+        for(String bam : BamFiles){
+            Path BamPath = Paths.get(bam);
+            Path tmp = Paths.get(tmpdir);
+            
+            HTSMultAlignmentIteration(BamPath, wins, start);
+            start = false;
+        }
+    }
+    
+    private void HTSMultAlignmentIteration(Path BamPath, WindowPlan wins, boolean start) throws IOException{
+        for(String chr : wins.getChrList()){
+            log.log(Level.INFO, "Getting RD alignments for chr: " + chr);
+            Integer[] starts = wins.getStarts(chr);
+            Integer[] ends = wins.getEnds(chr);
+            final double[] score = (start)? new double[starts.length] : this.histograms.get(chr).retrieveRDBins();
+            if(start){
+                for(int i = 0; i < score.length; i++){
+                    score[i] = 0.0d;
+                }
+            }
+            SamReader reader = SamReaderFactory.make()
+                .validationStringency(ValidationStringency.LENIENT)
+                .samRecordFactory(DefaultSAMRecordFactory.getInstance())
+                .open(BamPath.toFile());
+            
+            reader.query(chr, starts[0] + 1, ends[ends.length - 1], true)
+                    .forEachRemaining(s -> {
+                        int mid = (s.getAlignmentEnd() + s.getAlignmentStart()) / 2;
+                        int bin = Math.floorDiv(mid, wins.getWindowSize());
+                        
+                        if(bin < score.length)
+                            score[bin] += 1.0d;
+                    });
+            
+            reader.close();
+            
+            if(start){
+                this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
+                for(int i = 0; i < score.length; i++){
+                    this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
+                }
+                this.histograms.get(chr).writeToTemp();
+            }else{
+                this.histograms.get(chr).AddRDValues(score);
+            }
+        }
     }
     
     public void processBamNoRG(String BamFile, WindowPlan wins, String tmpdir) throws Exception{

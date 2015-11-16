@@ -14,6 +14,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -114,6 +115,7 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
         
         return bins;
     }
+    
 
     @Override
     public void clearData() {
@@ -201,6 +203,37 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
         }
         
     }
+    
+    public void AddRDValues(double[] values){
+        if(values.length != this.numEntries){
+            log.log(Level.SEVERE, "Error updating values for ChrHistogram for chr: " + this.chr);
+            log.log(Level.SEVERE, "Exiting!");
+            System.exit(-1);
+        }
+        this.score.clear();
+        for(double v : values){
+            this.score.add(v);
+        }
+        this.UpdateRDValues();
+    }
+    
+    private void UpdateRDValues(){
+        try{
+            RandomAccessFile rand = this.tempFile.getFileForReading(chr);
+            for(int x = 0; x < super.numEntries; x++){
+                //rand.write(IntUtils.Int32ToByteArray(this.start.get(x)));
+                //rand.write(IntUtils.Int32ToByteArray(this.end.get(x)));
+                rand.seek(rand.getFilePointer() + 8);
+                rand.write(DoubleUtils.Dbl64toByteArray(this.score.get(x)));
+            }
+        }catch(IOException ex){
+            log.log(Level.SEVERE, "Error writing to ChrHistogram temp file for chr: " + this.chr, ex);
+        }
+        
+        // Clear the list
+        this.clearData();
+    }
+    
     
     public void WriteOutText(BufferedWriter output) throws IOException{        
         byte[] ints = new byte[4];

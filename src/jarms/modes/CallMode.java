@@ -9,10 +9,9 @@ import DataUtils.ThreadingUtils.ThreadDivisor;
 import DataUtils.ThreadingUtils.ThreadFactoryManager;
 import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import DataUtils.WindowPlan;
-import FastaUtils.GCWindowFactory;
 import FastaUtils.GlobalGCCorrectionProfile;
 import FastaUtils.HTSGCWindowFactory;
-import GetCmdOpt.SimpleModeCmdLineParser;
+import GetCmdOpt.ArrayModeCmdLineParser;
 import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogramFactory;
 import SVCaller.MeanShiftMethod;
@@ -22,7 +21,6 @@ import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.ValidationStringency;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -37,22 +35,22 @@ import java.util.logging.Logger;
  */
 public class CallMode {
     private static final Logger log = Logger.getLogger(CallMode.class.getName());
-    private final SimpleModeCmdLineParser cmd;
+    private final ArrayModeCmdLineParser cmd;
     
-    private final String bamFile;
+    private final List<String> bamFiles;
     private final String outDir;
     private final String fastaFile;
     private int OverrideWinSize = -1;
     private int threads = 1;
 
-    public CallMode(SimpleModeCmdLineParser cmd) {
+    public CallMode(ArrayModeCmdLineParser cmd) {
         this.cmd = cmd;
         
         if(cmd.HasOpt("input") && new File(cmd.GetValue("input")).canRead())
-            this.bamFile = cmd.GetValue("input");
+            this.bamFiles = cmd.GetArray("input");
         else{
-            this.bamFile = null;
-            ErrorExit(cmd.GetValue("input"));
+            this.bamFiles = null;
+            ErrorExit("input");
         }
         
         if(cmd.HasOpt("outbase"))
@@ -76,7 +74,7 @@ public class CallMode {
 
     public void run() {
         // Get BAM metadata
-        BamMetadataSampler metadata = new BamMetadataSampler(this.bamFile);
+        BamMetadataSampler metadata = new BamMetadataSampler(this.bamFiles);
         metadata.getMetaData();
         
         // Identify window plan
@@ -97,10 +95,11 @@ public class CallMode {
         log.log(Level.FINE, "[CALLMODE] Starting RD histogram counting, multi-threaded");
         Map<ChrHistogramFactory, Set<String>> rdworkers = new HashMap<>();
         for(int i = 0; i < chrs.size(); i++){
-            SamReader reader = SamReaderFactory.make()
-                .validationStringency(ValidationStringency.LENIENT)
-                .samRecordFactory(DefaultSAMRecordFactory.getInstance())
-                .open(new File(bamFile));
+            SamReader reader = null;
+            /*SamReaderFactory.make()
+            .validationStringency(ValidationStringency.LENIENT)
+            .samRecordFactory(DefaultSAMRecordFactory.getInstance())
+            .open(new File());*/
             ThreadTempRandAccessFile threadtemp = new ThreadTempRandAccessFile(Paths.get(outDir + "." + i + ".rdhisto.tmp"));
             rdworkers.put(new ChrHistogramFactory(reader, wins, threadtemp), chrs.get(i));
         }
@@ -120,7 +119,8 @@ public class CallMode {
         ChrHistogramFactory rawRDHisto = new ChrHistogramFactory(rawHistoRand);
         if(!rawHistoRand.CanResume()){
             try {
-                rawRDHisto.processBamNoRG(bamFile, wins, outDir);
+                rawRDHisto.processMultipleBamNoRG(bamFiles, wins, outDir);
+                //rawRDHisto.processBamNoRG(bamFile, wins, outDir);
             } catch (Exception ex) {
                 log.log(Level.SEVERE, "[CALLMODE] Error processing bam file!", ex);
             }

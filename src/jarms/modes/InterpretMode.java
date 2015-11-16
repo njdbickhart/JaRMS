@@ -6,7 +6,7 @@
 package jarms.modes;
 
 import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
-import GetCmdOpt.SimpleModeCmdLineParser;
+import GetCmdOpt.ArrayModeCmdLineParser;
 import HistogramUtils.ChrHistogramFactory;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,12 +24,12 @@ import java.util.logging.Logger;
 public class InterpretMode {
     private static final Logger log = Logger.getLogger(InterpretMode.class.getName());
     
-    private final SimpleModeCmdLineParser cmd;
+    private final ArrayModeCmdLineParser cmd;
     private File binary;
     private File index;
     private Path output;
     
-    public InterpretMode(SimpleModeCmdLineParser cmd){
+    public InterpretMode(ArrayModeCmdLineParser cmd){
         this.cmd = cmd;
         
         if(cmd.HasOpt("input")){
