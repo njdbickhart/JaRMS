@@ -67,7 +67,7 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
     
     private void HTSMultAlignmentIteration(Path BamPath, WindowPlan wins, boolean start) throws IOException{
         for(String chr : wins.getChrList()){
-            log.log(Level.INFO, "Getting RD alignments for chr: " + chr);
+            log.log(Level.INFO, "Getting RD alignments from bam: " + BamPath.getFileName() + " for chr: " + chr);
             Integer[] starts = wins.getStarts(chr);
             Integer[] ends = wins.getEnds(chr);
             final double[] score = (start)? new double[starts.length] : this.histograms.get(chr).retrieveRDBins();

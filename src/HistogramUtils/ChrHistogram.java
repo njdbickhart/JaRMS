@@ -13,8 +13,6 @@ import TempFiles.binaryUtils.IntUtils;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -210,9 +208,11 @@ public class ChrHistogram extends TempHistogram<Double> implements ThreadHistogr
             log.log(Level.SEVERE, "Exiting!");
             System.exit(-1);
         }
+        this.sum = 0.0d;
         this.score.clear();
         for(double v : values){
             this.score.add(v);
+            this.sum += v;
         }
         this.UpdateRDValues();
     }

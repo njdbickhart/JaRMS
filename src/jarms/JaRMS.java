@@ -85,7 +85,7 @@ public class JaRMS {
                 + "\t-f\tThe reference genome fasta file that was used during alignment of the bam file" + nl
                 + "\t-o\tOutput file prefix and directory" + nl
                 + "\t-t\tNumber of threads to use [optional: use one thread]" + nl
-                + "\t-w\tUse this window siez [optional: determine from BAM read depth]" + nl,
+                + "\t-w\tUse this window size [optional: determine from BAM read depth]" + nl,
                 "i-f:o:t:w:d|", 
                 "ifo", 
                 "ifotwd", 

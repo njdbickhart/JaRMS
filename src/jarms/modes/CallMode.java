@@ -16,10 +16,7 @@ import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogramFactory;
 import SVCaller.MeanShiftMethod;
 import SVCaller.SVSegmentation;
-import htsjdk.samtools.DefaultSAMRecordFactory;
 import htsjdk.samtools.SamReader;
-import htsjdk.samtools.SamReaderFactory;
-import htsjdk.samtools.ValidationStringency;
 import java.io.File;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -46,7 +43,8 @@ public class CallMode {
     public CallMode(ArrayModeCmdLineParser cmd) {
         this.cmd = cmd;
         
-        if(cmd.HasOpt("input") && new File(cmd.GetValue("input")).canRead())
+        // Checking to see if we can read at least one Bam file!
+        if(cmd.HasOpt("input") && new File(cmd.GetArray("input").get(0)).canRead())
             this.bamFiles = cmd.GetArray("input");
         else{
             this.bamFiles = null;
@@ -188,7 +186,8 @@ public class CallMode {
         // Clean up tmp files
         final File folder = new File(System.getProperty("user.dir"));
         final File[] files = folder.listFiles((final File dir, final String name) -> 
-                name.endsWith("gccorr.tmp") || name.endsWith("gcprofile.tmp") || name.endsWith("levels.tmp") || name.endsWith("rdhisto.tmp"));
+                name.endsWith("gccorr.tmp") || name.endsWith("gcprofile.tmp") || name.endsWith("levels.tmp") || name.endsWith("rdhisto.tmp")
+                || name.endsWith("rdhisto.tmp.idx") || name.endsWith("gcprofile.tmp.idx"));
         for ( final File file : files ) {
             if ( !file.delete() ) {
                 System.err.println( "Can't remove " + file.getAbsolutePath() );
