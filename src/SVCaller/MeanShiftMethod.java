@@ -47,6 +47,7 @@ public class MeanShiftMethod {
                 .forEach((chr) -> {
         //workers.stream().forEach((chrHisto) -> {
                     try {
+                        log.log(Level.FINE, "[MEAN] Beginning meanshift for chr: " + chr);
                         MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), rand, chr, range);
                         LevelHistogram c = shifter.call();
                         //LevelHistogram c = cHisto.get();
@@ -102,6 +103,8 @@ public class MeanShiftMethod {
             double[] level = Arrays.copyOf(rdBins, rdBins.length);
             double firstmean = StdevAvg.DoubleAvg(rdBins);
             double firstsigma = StdevAvg.stdevDBL(firstmean, rdBins);
+            
+            log.log(Level.FINE, "[SHIFTER] Chr: " + chr + " mean: " + firstmean + " chr sigma: " + firstsigma);
             
             // NOTE: testing curve fit mean and sigma
             GaussianFitMeanStdev fitter = new GaussianFitMeanStdev();
@@ -298,7 +301,7 @@ public class MeanShiftMethod {
               
                 int b_stop = --b;
                 if (b_start > b_stop) {
-                    log.log(Level.WARNING, "Abnormal bin range! " + b_start + " is greater than: " + b_stop);
+                    log.log(Level.WARNING, "Abnormal bin range for chr: " + chr + "! " + b_start + " is greater than: " + b_stop);
                     b = b_start;
                     continue;
                 }
@@ -312,7 +315,7 @@ public class MeanShiftMethod {
                     n++;
                 }
                 if (n <= 0) {
-                    log.log(Level.WARNING, "Error! Found width of 0!");
+                    log.log(Level.WARNING, "Error! Found width of 0 for chr: " + chr + " at bin: " + b_start + "!");
                     continue;
                 }
                 nl *= getInverse(n);
