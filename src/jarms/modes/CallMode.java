@@ -146,26 +146,33 @@ public class CallMode {
         
         final double rawStdev = Math.sqrt(rawSS);
         log.log(Level.INFO, "[CALLMODE] Unadjusted RD values: mean-> " + rawMean + " sd-> " +rawStdev);
-        
-        // Generate GC correction scheme
-        log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
-        ThreadTempRandAccessFile gcProfilerand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gcprofile.tmp"));
-        HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, gcProfilerand);
-        GCWins.generateGCProfile(metadata, wins);
-        log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
-        
-        // Create GC correction utility
         ThreadTempRandAccessFile gcCorrRand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gccorr.tmp"));
-        GlobalGCCorrectionProfile gccorrect = new GlobalGCCorrectionProfile();
-        gccorrect.CalculationGCCorrectionValues(metadata, rawRDHisto, GCWins, rawMean);
-        log.log(Level.FINE, "[CALLMODE] Corrected GC bias");
         
-        // Correct GC
-        ChrHistogramFactory gcCorrectRDHisto = gccorrect.CorrectGC(gcCorrRand, metadata, rawRDHisto, GCWins);
+        ChrHistogramFactory gcCorrectRDHisto = new ChrHistogramFactory(gcCorrRand);
+        if(gcCorrRand.CanResume()){
+            gcCorrectRDHisto.ResumeFromTempFile(gcCorrRand);
+        }else{
+            // Generate GC correction scheme
+            log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
+            ThreadTempRandAccessFile gcProfilerand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gcprofile.tmp"));
+            HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, gcProfilerand);
+            GCWins.generateGCProfile(metadata, wins);
+            log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
+
+            // Create GC correction utility
+
+            GlobalGCCorrectionProfile gccorrect = new GlobalGCCorrectionProfile();
+            gccorrect.CalculationGCCorrectionValues(metadata, rawRDHisto, GCWins, rawMean);
+            log.log(Level.FINE, "[CALLMODE] Corrected GC bias");
+
+            // Correct GC
+            gcCorrectRDHisto = gccorrect.CorrectGC(gcCorrRand, metadata, rawRDHisto, GCWins);
+
+            // Check to see if we nee to recalculate the sum values for each GCCorrected entity
+            gcCorrectRDHisto.checkSumScores();
+            gcCorrRand.printIndex();
+        }
         
-        // Check to see if we nee to recalculate the sum values for each GCCorrected entity
-        gcCorrectRDHisto.checkSumScores();
-        gcCorrRand.printIndex();
         
         // Mean shift signal
         log.log(Level.FINE, "[CALLMODE] Beginning mean shift algorithm");
