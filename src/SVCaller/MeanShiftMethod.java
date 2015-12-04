@@ -111,6 +111,17 @@ public class MeanShiftMethod {
             fitter.CalculateMeanStdev(rdBins);
             double mean = fitter.getMean();
             double sigma = fitter.getStdev();
+            log.log(Level.FINEST, "[SHIFTER] final mean: " + mean + " final sigma: " + sigma);
+            
+            // Catch chrs with zero signal or no deviation of signal
+            if(mean == 0.0d || sigma == 0.0d){
+                log.log(Level.WARNING, "[SHIFTER] Found a zero mean ( " + mean + " ) or no deviation of signal ( " + sigma + "). Skipping chr: " + chr);
+                for(int i = 0; i < level.length; i++){
+                    shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
+                }
+                shifted.writeToTemp();
+                return shifted;
+            }
             
             for (int bin_band = 2; bin_band <= range; bin_band++) {
       

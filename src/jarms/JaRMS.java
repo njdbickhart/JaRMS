@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.7";
+    private static final String version = "0.0.8";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**

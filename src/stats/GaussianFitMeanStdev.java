@@ -27,6 +27,8 @@ public class GaussianFitMeanStdev {
     private double mean;
     private double stdev;
     
+    public boolean cantUse = false;
+    
     public void CalculateGlobalMeanStdev(ChrHistogramFactory gchisto, WindowPlan wins){
         Long maxvalue = 0l;
         int count = 0;
@@ -110,6 +112,12 @@ public class GaussianFitMeanStdev {
                 maxvalue = d.longValue();
         }
         
+        if(maxvalue.intValue() <= 3){
+            log.log(Level.WARNING, "Chromosome had very little signal! Max signal value: " + maxvalue.intValue());
+            this.cantUse = true;
+            return;
+        }
+        
         Double[] bins = new Double[maxvalue.intValue() + 1];
         java.util.Arrays.fill(bins, 0.0d);
         for(Double d : values){
@@ -117,6 +125,8 @@ public class GaussianFitMeanStdev {
         }
         double testmean = StdevAvg.DoubleAvg(values);
         double teststdev = StdevAvg.stdevDBL(testmean, values);
+        
+        log.log(Level.FINEST, "[GMSTDEV] testmean: " + testmean + " teststdev: " + teststdev);
         this.fitter = GaussianCurveFitter.create().withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
         
         WeightedObservedPoints obs = new WeightedObservedPoints();
@@ -132,6 +142,8 @@ public class GaussianFitMeanStdev {
         
         Double mincut = parameters[1] - 2.0d * parameters[2];
         Double maxcut = parameters[1] + 2.0d * parameters[2];
+        
+        log.log(Level.FINEST, "[GMSTDEV] initial mean: " + this.mean + " initial stdev: " + this.stdev + " mincut, maxcut: ( " + mincut + "," + maxcut + " )");
         
         if(maxcut - mincut < 3 || mincut < 0 || maxcut < 0){
             log.log(Level.WARNING, "Mean/Stdev calculation had " + mincut + " and " + maxcut + "! Not cropping values");
