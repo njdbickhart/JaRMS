@@ -125,6 +125,7 @@ public class CallMode {
             log.log(Level.FINE, "[CALLMODE] Finished RD histogram start");
             rawHistoRand.printIndex();
         }else{
+            log.log(Level.FINE, "[CALLMODE] Resumed RD calculation from previous temp files");
             rawRDHisto.ResumeFromTempFile(rawHistoRand);
         }
         // Calculate global mean and SD RD prior to correction
@@ -146,10 +147,17 @@ public class CallMode {
         
         final double rawStdev = Math.sqrt(rawSS);
         log.log(Level.INFO, "[CALLMODE] Unadjusted RD values: mean-> " + rawMean + " sd-> " +rawStdev);
+        
         ThreadTempRandAccessFile gcCorrRand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gccorr.tmp"));
+        if(new File(gcCorrRand.GetFileName()).exists()){
+            log.log(Level.INFO, "[CALLMODE] Found index file: " + gcCorrRand.GetFileName());
+        }else{
+            log.log(Level.INFO, "[CALLMODE] Could not find index file: " + gcCorrRand.GetFileName());
+        }
         
         ChrHistogramFactory gcCorrectRDHisto = new ChrHistogramFactory(gcCorrRand);
         if(gcCorrRand.CanResume()){
+            log.log(Level.FINE, "[CALLMODE] Resumed GC calculation from previous temp files");
             gcCorrectRDHisto.ResumeFromTempFile(gcCorrRand);
         }else{
             // Generate GC correction scheme
