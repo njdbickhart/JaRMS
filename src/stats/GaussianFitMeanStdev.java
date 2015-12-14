@@ -70,7 +70,7 @@ public class GaussianFitMeanStdev {
         }
         teststdev /= (double) (count - 1);
         teststdev = Math.sqrt(teststdev);
-        this.fitter = GaussianCurveFitter.create().withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
+        this.fitter = GaussianCurveFitter.create().withMaxIterations(50).withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
         
         double[] parameters = fitter.fit(obs.toList());
         Double mincut = parameters[1] - 2.0d * parameters[2];
@@ -93,7 +93,7 @@ public class GaussianFitMeanStdev {
         obs.add(i, bins[i]);
         }
         
-        this.fitter = GaussianCurveFitter.create().withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
+        this.fitter = GaussianCurveFitter.create().withMaxIterations(50).withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
         double[] par = fitter.fit(obs.toList());
         this.mean = par[1];
         this.stdev = par[2];
@@ -127,7 +127,7 @@ public class GaussianFitMeanStdev {
         double teststdev = StdevAvg.stdevDBL(testmean, values);
         
         log.log(Level.FINEST, "[GMSTDEV] testmean: " + testmean + " teststdev: " + teststdev);
-        this.fitter = GaussianCurveFitter.create().withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
+        this.fitter = GaussianCurveFitter.create().withMaxIterations(50).withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
         
         WeightedObservedPoints obs = new WeightedObservedPoints();
         for(int i = 0; i < bins.length && i < testmean * 3; i++){
