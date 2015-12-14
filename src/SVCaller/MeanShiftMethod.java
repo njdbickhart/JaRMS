@@ -114,7 +114,7 @@ public class MeanShiftMethod {
             log.log(Level.FINEST, "[SHIFTER] final mean: " + mean + " final sigma: " + sigma);
             
             // Catch chrs with zero signal or no deviation of signal
-            if(mean == 0.0d || sigma == 0.0d){
+            if(mean <= 0.0d || sigma <= 0.0d){
                 log.log(Level.WARNING, "[SHIFTER] Found a zero mean ( " + mean + " ) or no deviation of signal ( " + sigma + "). Skipping chr: " + chr);
                 for(int i = 0; i < level.length; i++){
                     shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
@@ -129,12 +129,21 @@ public class MeanShiftMethod {
 
                 for (int b = 0;b < this.rdBins.length; b++) 
                     if (!mask[b]) level[b] = rdBins[b];
+                
+                try{
+                    level = CalcLevels(level, mask, bin_band, mean, sigma);
 
-                level = CalcLevels(level, mask, bin_band, mean, sigma);
+                    level = CalcLevels(level, mask, bin_band, mean, sigma);
 
-                level = CalcLevels(level, mask, bin_band, mean, sigma);
-
-                level = CalcLevels(level, mask, bin_band, mean, sigma);
+                    level = CalcLevels(level, mask, bin_band, mean, sigma);
+                }catch(Exception ex){
+                    log.log(Level.SEVERE, "[SHIFTER] Encountered problem with mean shift for chr " + chr + ". Printing existing signal to temp." + ex);
+                    for(int i = 0; i < level.length; i++){
+                        shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
+                    }
+                    shifted.writeToTemp();
+                    return shifted;
+                }
 
                 
                 mask = UpdateMask(level, mask, mean, sigma);
