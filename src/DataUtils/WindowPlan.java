@@ -151,4 +151,7 @@ public class WindowPlan {
     public void addToExclude(String chr){
         this.exclude.add(chr);
     }
+    public Set<String> getExclude(){
+        return this.exclude;
+    }
 }

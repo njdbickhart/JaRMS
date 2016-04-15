@@ -82,11 +82,7 @@ public class HTSGCWindowFactory extends GCWindowFactory{
         }
                 
         int discrepencies = 0;        
-        for(String chr : wins.getChrList()){
-            Integer[] starts = wins.getStarts(chr);
-            Integer[] ends = wins.getEnds(chr);
-            this.histograms.put(chr, new GCHistogram(chr, rand));
-            
+        for(String chr : wins.getChrList()){           
             if(!refChrList.contains(chr)){
                 log.log(Level.WARNING, "Reference Fasta doesn't contain chr: " + chr + "! Cannot GC correct! Adding to exclusions.");
                 discrepencies++;
@@ -94,6 +90,9 @@ public class HTSGCWindowFactory extends GCWindowFactory{
                 wins.addToExclude(chr);
                 continue;
             }
+            Integer[] starts = wins.getStarts(chr);
+            Integer[] ends = wins.getEnds(chr);
+            this.histograms.put(chr, new GCHistogram(chr, rand));
             log.log(Level.FINEST, "Calculating GC percentage for chr: " + chr);
             ReferenceSequence refSeq = refFile.getSequence(chr);
             

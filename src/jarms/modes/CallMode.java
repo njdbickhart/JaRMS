@@ -158,12 +158,14 @@ public class CallMode {
         ChrHistogramFactory gcCorrectRDHisto = new ChrHistogramFactory(gcCorrRand);
         if(gcCorrRand.CanResume()){
             log.log(Level.FINE, "[CALLMODE] Resumed GC calculation from previous temp files");
+            metadata.UpdateChrOrder(wins);
             gcCorrectRDHisto.ResumeFromTempFile(gcCorrRand);
         }else{
             // Generate GC correction scheme
             log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
             ThreadTempRandAccessFile gcProfilerand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gcprofile.tmp"));
             HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, gcProfilerand);
+            metadata.UpdateChrOrder(wins);
             GCWins.generateGCProfile(metadata, wins);
             log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
 
