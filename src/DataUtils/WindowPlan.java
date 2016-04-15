@@ -148,4 +148,7 @@ public class WindowPlan {
             return false;
         return this.starts.containsKey(chr);
     }
+    public void addToExclude(String chr){
+        this.exclude.add(chr);
+    }
 }

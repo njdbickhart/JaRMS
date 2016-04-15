@@ -15,8 +15,11 @@ import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -66,14 +69,29 @@ public class HTSGCWindowFactory extends GCWindowFactory{
     private void processFastaFile(WindowPlan wins){
         
         ReferenceSequenceFile refFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(this.fastaPath.toFile());
-        
+        // Create a reference chr set to test to see if the reference file matches the bam header
+        Set<String> refChrList = refFile.getSequenceDictionary()
+                .getSequences()
+                .stream()
+                .map(s -> s.getSequenceName())
+                .collect(Collectors.toSet());
+                
+        int discrepencies = 0;        
         for(String chr : wins.getChrList()){
             Integer[] starts = wins.getStarts(chr);
             Integer[] ends = wins.getEnds(chr);
             this.histograms.put(chr, new GCHistogram(chr, rand));
             
+            if(!refChrList.contains(chr)){
+                log.log(Level.WARNING, "Reference Fasta doesn't contain chr: " + chr + "! Cannot GC correct! Adding to exclusions.");
+                discrepencies++;
+                
+                wins.addToExclude(chr);
+                continue;
+            }
             log.log(Level.FINEST, "Calculating GC percentage for chr: " + chr);
             ReferenceSequence refSeq = refFile.getSequence(chr);
+            
             byte[] seq = refSeq.getBases();
             
             for(int x = 0; x < starts.length; x++){
@@ -97,6 +115,9 @@ public class HTSGCWindowFactory extends GCWindowFactory{
                 this.histograms.get(chr).addHistogram(chr, starts[x], ends[x], gc);
             }
             this.histograms.get(chr).writeToTemp();
+        }
+        if(discrepencies > 0){
+            log.log(Level.WARNING, "Identified " + discrepencies + " bam/fasta chromosome discrepencies!");
         }
     }
     
