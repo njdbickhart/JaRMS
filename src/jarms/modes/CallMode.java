@@ -152,7 +152,7 @@ public class CallMode {
         if(new File(gcCorrRand.GetFileName()).exists()){
             log.log(Level.INFO, "[CALLMODE] Found index file: " + gcCorrRand.GetFileName());
         }else{
-            log.log(Level.INFO, "[CALLMODE] Could not find index file: " + gcCorrRand.GetFileName());
+            log.log(Level.INFO, "[CALLMODE] Could not find index file: " + gcCorrRand.GetFileName() + ". Calculating GC percentage from scratch.");
         }
         
         ChrHistogramFactory gcCorrectRDHisto = new ChrHistogramFactory(gcCorrRand);

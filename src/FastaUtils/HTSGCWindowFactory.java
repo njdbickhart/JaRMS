@@ -15,6 +15,7 @@ import htsjdk.samtools.reference.ReferenceSequenceFileFactory;
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
@@ -70,11 +71,15 @@ public class HTSGCWindowFactory extends GCWindowFactory{
         
         ReferenceSequenceFile refFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(this.fastaPath.toFile());
         // Create a reference chr set to test to see if the reference file matches the bam header
-        Set<String> refChrList = refFile.getSequenceDictionary()
-                .getSequences()
-                .stream()
-                .map(s -> s.getSequenceName())
-                .collect(Collectors.toSet());
+        if(!refFile.isIndexed()){
+            log.log(Level.SEVERE, "Could not find index for reference fasta! Please generate one using Samtools!");            
+        }
+        
+        Set<String> refChrList = new HashSet<>();
+        ReferenceSequence rSeq = null;
+        while((rSeq = refFile.nextSequence()) != null){
+            refChrList.add(rSeq.getName());
+        }
                 
         int discrepencies = 0;        
         for(String chr : wins.getChrList()){
