@@ -152,8 +152,15 @@ public class GaussianFitMeanStdev {
             obs.add(i, bins[i]);
         }
         
-        double[] parameters = fitter.fit(obs.toList());
-        
+        double[] parameters;
+        try{
+            parameters = fitter.fit(obs.toList());
+        }catch(TooManyIterationsException ex){
+            log.log(Level.WARNING, "Too many iterations for local fitter! Using regular mean and stdev.");
+            this.mean = testmean;
+            this.stdev = teststdev;
+            return;
+        }
         this.mean = parameters[1];
         this.stdev = parameters[2];
         
