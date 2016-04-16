@@ -71,15 +71,17 @@ public class GaussianFitMeanStdev {
         }
         teststdev /= (double) (count - 1);
         teststdev = Math.sqrt(teststdev);
+        double[] parameters;
         try{
             this.fitter = GaussianCurveFitter.create().withMaxIterations(50).withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
+            parameters = fitter.fit(obs.toList());
         }catch(TooManyIterationsException ex){
             log.log(Level.WARNING, "Too many iterations! Using regular mean and stdev.");
             this.mean = testmean;
             this.stdev = teststdev;
             return;
         }
-        double[] parameters = fitter.fit(obs.toList());
+        
         Double mincut = parameters[1] - 2.0d * parameters[2];
         Double maxcut = parameters[1] + 2.0d * parameters[2];
         
