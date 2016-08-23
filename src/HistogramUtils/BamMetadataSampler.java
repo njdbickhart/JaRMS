@@ -5,6 +5,7 @@
  */
 package HistogramUtils;
 
+import DataUtils.WindowPlan;
 import htsjdk.samtools.BAMIndex;
 import htsjdk.samtools.BAMIndexMetaData;
 import htsjdk.samtools.DefaultSAMRecordFactory;
@@ -106,7 +107,15 @@ public class BamMetadataSampler {
             
         }
         
-        totalXCov /= totalGenomeSize;
+        // I realize that I've already factored out the genome size in the chr length estimation
+        //totalXCov /= totalGenomeSize;
+        totalXCov /= chrOrder.size();
         log.log(Level.INFO, "BAM metadata stats: genome size : " + totalGenomeSize + " #chrs: " + this.chrOrder.size() + " avg X coverage: " + totalXCov);
+    }
+    
+    public void UpdateChrOrder(WindowPlan wins){
+        int start = this.chrOrder.size();
+        this.chrOrder.removeAll(wins.getExclude());
+        log.log(Level.INFO, "Updated mapped chrs. Starting count: " + start + " ending count: " + this.chrOrder.size());
     }
 }

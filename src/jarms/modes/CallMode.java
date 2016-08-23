@@ -152,18 +152,20 @@ public class CallMode {
         if(new File(gcCorrRand.GetFileName()).exists()){
             log.log(Level.INFO, "[CALLMODE] Found index file: " + gcCorrRand.GetFileName());
         }else{
-            log.log(Level.INFO, "[CALLMODE] Could not find index file: " + gcCorrRand.GetFileName());
+            log.log(Level.INFO, "[CALLMODE] Could not find index file: " + gcCorrRand.GetFileName() + ". Calculating GC percentage from scratch.");
         }
         
         ChrHistogramFactory gcCorrectRDHisto = new ChrHistogramFactory(gcCorrRand);
         if(gcCorrRand.CanResume()){
             log.log(Level.FINE, "[CALLMODE] Resumed GC calculation from previous temp files");
+            metadata.UpdateChrOrder(wins);
             gcCorrectRDHisto.ResumeFromTempFile(gcCorrRand);
         }else{
             // Generate GC correction scheme
             log.log(Level.FINE, "[CALLMODE] Calculating GC windows");
             ThreadTempRandAccessFile gcProfilerand = new ThreadTempRandAccessFile(Paths.get(this.outDir + ".gcprofile.tmp"));
             HTSGCWindowFactory GCWins = new HTSGCWindowFactory(this.fastaFile, gcProfilerand);
+            metadata.UpdateChrOrder(wins);
             GCWins.generateGCProfile(metadata, wins);
             log.log(Level.FINE, "[CALLMODE] Estimated GC profile");
 
