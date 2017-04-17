@@ -106,7 +106,7 @@ public class SVSegmentation {
             } catch (InterruptedException | ExecutionException ex) {
                 log.log(Level.SEVERE, "Error retrieving Threaded results!", ex);
             } catch (Exception ex) {
-                log.log(Level.SEVERE, null, ex);
+                log.log(Level.SEVERE, "Error segmenting RD histo for : " + chr, ex);
             }
         }
         

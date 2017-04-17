@@ -9,8 +9,6 @@ import DataUtils.ThreadingUtils.ThreadTempRandAccessFile;
 import HistogramUtils.BamMetadataSampler;
 import HistogramUtils.ChrHistogram;
 import HistogramUtils.ChrHistogramFactory;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

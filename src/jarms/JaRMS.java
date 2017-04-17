@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.9";
+    private static final String version = "0.0.10";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**
@@ -80,7 +80,7 @@ public class JaRMS {
         
         cmd.AddMode("call", 
                 "JaRMS call mode" + nl +
-                "Usage: java -jar JaRMS.jar cluster [-i bamfile -f fasta file -o output prefix] (option: -t number of threads)" + nl
+                "Usage: java -jar JaRMS.jar call [-i bamfile -f fasta file -o output prefix] (option: -t number of threads)" + nl
                 + "\t-i\tOne or more BWA-processed bam files for processing" + nl
                 + "\t-f\tThe reference genome fasta file that was used during alignment of the bam file" + nl
                 + "\t-o\tOutput file prefix and directory" + nl

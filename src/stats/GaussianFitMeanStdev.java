@@ -99,15 +99,19 @@ public class GaussianFitMeanStdev {
         
         obs = new WeightedObservedPoints();
         for(int i = mincut.intValue(); i < maxcut.intValue(); i++){
-        obs.add(i, bins[i]);
+            obs.add(i, bins[i]);
         }
+        double[] par; 
         try{
             this.fitter = GaussianCurveFitter.create().withMaxIterations(50).withStartPoint(new double[]{maxvalue * 0.4 / teststdev,testmean, teststdev * 0.5});
+            par = fitter.fit(obs.toList());
         }catch(TooManyIterationsException ex){
             log.log(Level.WARNING, "Too many iterations! Using previously generated mean and stdev.");
+            this.mean = parameters[1];
+            this.stdev = parameters[2];
             return;
         }
-        double[] par = fitter.fit(obs.toList());
+        
         this.mean = par[1];
         this.stdev = par[2];
     }
@@ -181,7 +185,15 @@ public class GaussianFitMeanStdev {
         for(int i = mincut.intValue(); i < maxcut.intValue(); i++){
             obs.add(i, bins[i]);
         }
-        double[] par = fitter.fit(obs.toList());
+        double[] par;
+        try{
+            par = fitter.fit(obs.toList());
+        }catch(TooManyIterationsException ex){
+            log.log(Level.WARNING, "Too many iterations in chr stdev and mean! Using previously generated mean and stdev.");
+            this.mean = parameters[1];
+            this.stdev = parameters[2];
+            return;
+        }
         this.mean = par[1];
         this.stdev = par[2];
     }

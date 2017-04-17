@@ -55,7 +55,7 @@ public class MeanShiftMethod {
                     } catch (InterruptedException | ExecutionException ex) {
                         log.log(Level.SEVERE, "Error retrieving ChrHistogram from threaded worker!", ex);
                     } catch (Exception ex) {
-                        log.log(Level.SEVERE, null, ex);
+                        log.log(Level.SEVERE, "Error performing meanshift for chr: " + chr, ex);
                     }
             });
         
