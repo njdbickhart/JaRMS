@@ -99,7 +99,9 @@ public class SVSegmentation {
             if(!corrGC.hasChrHistogram(chr))
                 continue;
             try {
-                Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), meanShift.getChrLevels(chr), ttest, wins, chr, gausmean, gausstdev);
+                Segmentation segmentor = new Segmentation(corrGC.getChrHistogram(chr).retrieveRDBins(), 
+                        corrGC.getChrHistogram(chr).retrieveZeroBins(),
+                        meanShift.getChrLevels(chr), ttest, wins, chr, gausmean, gausstdev);
                 FinalCalls.addAll(segmentor.call());
                 log.log(Level.FINEST, "Segmenting corrected RD histo for : " + chr);
                 //FinalCalls.addAll(threadSegs.get());
@@ -152,6 +154,7 @@ public class SVSegmentation {
     
     private class Segmentation implements Callable<List<BedStats>>{
         private final double[] corrRD;
+        private final double[] zeros;
         private final LevelHistogram level;
         private final WindowPlan wins;
         private final double globalMean;
@@ -172,7 +175,7 @@ public class SVSegmentation {
         private double chrMean;
         private double chrSD;
         
-        public Segmentation(double[] corrRD, LevelHistogram level, TDistributionFunction ttest, WindowPlan wins, String chr, double globalMean, double globalSD){
+        public Segmentation(double[] corrRD, double[] zeros, LevelHistogram level, TDistributionFunction ttest, WindowPlan wins, String chr, double globalMean, double globalSD){
             this.corrRD = corrRD;
             this.level = level;
             this.wins = wins;
@@ -181,6 +184,7 @@ public class SVSegmentation {
             this.globalSD = globalSD;
             this.calls = new ArrayList<>(corrRD.length);
             this.ttest = ttest;
+            this.zeros = zeros;
             
             // TODO: Debugging genome size estimates!
             this.GenomeSize = wins.getGenomeSize();
@@ -247,13 +251,13 @@ public class SVSegmentation {
                     //e4 = gaussianEValue(mean,sigma,rd,bs + add,be - add);
                 }
                 double n_reads_all = 0,n_reads_unique = 0;
+                double zeroScores[] = new double[be - bs + 1];
                 for (int i = bs;i <= be;i++) {
-                    //n_reads_all    += h_all->GetBinContent(i);
-                    //n_reads_unique += h_unique->GetBinContent(i);
-                }
-                double q0 = -1;
+                    zeroScores[i] = this.zeros[i];
+                }                
+                double q0 = StdevAvg.DoubleAvg(zeroScores);
                 if (n_reads_all > 0) q0 = (n_reads_all - n_reads_unique)/n_reads_all;
-                FinalCalls.add(new BedStats(this.chr, start, end, type, cnv, e, e2));
+                FinalCalls.add(new BedStats(this.chr, start, end, type, cnv, e, e2, q0));
             }
             
             return FinalCalls;

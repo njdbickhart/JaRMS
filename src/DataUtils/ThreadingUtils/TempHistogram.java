@@ -22,6 +22,7 @@ public abstract class TempHistogram <T extends Object>{
     protected List<Integer> start = new ArrayList<>();
     protected List<Integer> end = new ArrayList<>();
     protected List<T> score = new ArrayList<>();
+    protected List<Double> qualZero = new ArrayList<>();
     
     public TempHistogram(String chr, ThreadTempRandAccessFile tmpFile){
         this.chr = chr;
@@ -53,6 +54,8 @@ public abstract class TempHistogram <T extends Object>{
     public abstract void addHistogram(String chr, int start, int end);
     
     public abstract void addHistogram(String chr, int start, int end, T score);
+    
+    public abstract void addHistogram(String chr, int start, int end, T score, double zero);
     
     /*
         Default byte block implementation:
@@ -113,6 +116,10 @@ public abstract class TempHistogram <T extends Object>{
     
     public int getNumEntries(){
         return this.numEntries;
+    }
+    
+    public double getZero(int idx){
+        return this.qualZero.get(idx);
     }
     
     /*

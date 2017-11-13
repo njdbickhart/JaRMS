@@ -48,7 +48,13 @@ public class MeanShiftMethod {
         //workers.stream().forEach((chrHisto) -> {
                     try {
                         log.log(Level.FINE, "[MEAN] Beginning meanshift for chr: " + chr);
-                        MeanShifter shifter = new MeanShifter(wins, ttest, chisto.getChrHistogram(chr).retrieveRDBins(), rand, chr, range);
+                        MeanShifter shifter = new MeanShifter(wins, 
+                                ttest, 
+                                chisto.getChrHistogram(chr).retrieveRDBins(), 
+                                chisto.getChrHistogram(chr).retrieveZeroBins(),
+                                rand, 
+                                chr, 
+                                range);
                         LevelHistogram c = shifter.call();
                         //LevelHistogram c = cHisto.get();
                         this.shiftedChrHistos.put(c.getChr(), c);
@@ -72,6 +78,7 @@ public class MeanShiftMethod {
         
         private final WindowPlan wins;
         private final double[] rdBins;
+        private final double[] zeros;
         private final String chr;
         private final ThreadTempRandAccessFile tmpDir;
         private final TDistributionFunction ttest;
@@ -82,13 +89,14 @@ public class MeanShiftMethod {
         private final double CUTOFF_TWO_REGIONS = 0.01;
         private final double[] inversions = new double[invnum];
         
-        public MeanShifter(WindowPlan wins, TDistributionFunction ttest, double[] rdBins, ThreadTempRandAccessFile tmpDir, String chr, int range){
+        public MeanShifter(WindowPlan wins, TDistributionFunction ttest, double[] rdBins, double[] zeros, ThreadTempRandAccessFile tmpDir, String chr, int range){
             this.wins = wins;
             this.rdBins = rdBins;
             this.tmpDir = tmpDir;
             this.chr = chr;
             this.range = range;
             this.ttest = ttest;
+            this.zeros = zeros;
             for(int i = 0; i < invnum; i++)
                 this.inversions[i] = 0.0d;
         }
@@ -117,7 +125,7 @@ public class MeanShiftMethod {
             if(mean <= 0.0d || sigma <= 0.0d){
                 log.log(Level.WARNING, "[SHIFTER] Found a zero mean ( " + mean + " ) or no deviation of signal ( " + sigma + "). Skipping chr: " + chr);
                 for(int i = 0; i < level.length; i++){
-                    shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
+                    shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i], zeros[i]);
                 }
                 shifted.writeToTemp();
                 return shifted;
@@ -139,7 +147,7 @@ public class MeanShiftMethod {
                 }catch(Exception ex){
                     log.log(Level.SEVERE, "[SHIFTER] Encountered problem with mean shift for chr " + chr + ". Printing existing signal to temp." + ex);
                     for(int i = 0; i < level.length; i++){
-                        shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
+                        shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i], zeros[i]);
                     }
                     shifted.writeToTemp();
                     return shifted;
@@ -164,7 +172,7 @@ public class MeanShiftMethod {
             }
             // Create chromosome histogram and return
             for(int i = 0; i < level.length; i++){
-                shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i]);
+                shifted.addHistogram(chr, wins.getBinStart(chr, i), wins.getBinEnd(chr, i), level[i], zeros[i]);
             }
             shifted.writeToTemp();
             return shifted;

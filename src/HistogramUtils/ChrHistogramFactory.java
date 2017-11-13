@@ -71,6 +71,7 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
             Integer[] starts = wins.getStarts(chr);
             Integer[] ends = wins.getEnds(chr);
             final double[] score = (start)? new double[starts.length] : this.histograms.get(chr).retrieveRDBins();
+            final double[] zero = (start)? new double[starts.length] : this.histograms.get(chr).retrieveRDBins();
             if(start){
                 for(int i = 0; i < score.length; i++){
                     score[i] = 0.0d;
@@ -88,14 +89,22 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
                         
                         if(bin < score.length)
                             score[bin] += 1.0d;
+                        if(bin < zero.length && s.getMappingQuality() == 0)
+                            zero[bin] += 1.0d;
+                            
                     });
             
             reader.close();
             
+            // Turn zero counts into ratios
+            for(int x = 0; x < zero.length; x++){
+                zero[x] = zero[x] / score[x];
+            }
+            
             if(start){
                 this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
                 for(int i = 0; i < score.length; i++){
-                    this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i]);
+                    this.histograms.get(chr).addHistogram(chr, starts[i], ends[i], score[i], zero[i]);
                 }
                 this.histograms.get(chr).writeToTemp();
             }else{
@@ -213,11 +222,11 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
         }
     }
     
-    public void addHistogramData(ThreadTempRandAccessFile rand, String chr, int start, int end, double score){
+    public void addHistogramData(ThreadTempRandAccessFile rand, String chr, int start, int end, double score, double zero){
         if(!this.histograms.containsKey(chr)){
             this.histograms.put(chr, new ChrHistogram(chr, rand));
         }
-        this.histograms.get(chr).addHistogram(chr, start, end, score);
+        this.histograms.get(chr).addHistogram(chr, start, end, score, zero);
     }
     public boolean hasChrHistogram(String chr){
         return this.histograms.containsKey(chr);
@@ -276,7 +285,7 @@ public class ChrHistogramFactory implements ThreadHistoFactory{
     public void ResumeFromTempFile(ThreadTempRandAccessFile rand) {
         for(String chr : this.tmp.getListChrs()){
             this.histograms.put(chr, new ChrHistogram(chr, this.tmp));
-            this.histograms.get(chr).setNumEntries((int) (this.tmp.getChrLength(chr) / 16));
+            this.histograms.get(chr).setNumEntries((int) (this.tmp.getChrLength(chr) / 24));
             this.histograms.get(chr).recalculateSumScore();
         }
     }

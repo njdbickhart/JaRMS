@@ -169,4 +169,9 @@ public class GCHistogram extends TempHistogram<Double>{
         
         System.gc();
     }
+
+    @Override
+    public void addHistogram(String chr, int start, int end, Double score, double zero) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

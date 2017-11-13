@@ -16,18 +16,20 @@ public class BedStats extends BedSimple{
     private double copynum;
     private double eValue;
     private double gausEvalue;
-    public BedStats(String c, int s, int e, String name, double copynum, double eValue, double gausEvalue) {
+    private double avgZero;
+    public BedStats(String c, int s, int e, String name, double copynum, double eValue, double gausEvalue, double avgZero) {
         super(c, s, e, name);
         this.copynum = copynum;
         this.eValue = eValue;
         this.gausEvalue = gausEvalue;
+        this.avgZero = avgZero;
     }
     
     public String getOutputString(){
         StringBuilder str = new StringBuilder();
         str.append(chr).append("\t").append(start).append("\t").append(end);
         str.append("\t").append(name).append("\t").append(copynum).append("\t").append(eValue).append("\t");
-        str.append(gausEvalue).append(System.lineSeparator());
+        str.append(gausEvalue).append("\t").append(avgZero).append(System.lineSeparator());
         return str.toString();
     }
     

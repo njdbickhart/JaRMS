@@ -114,7 +114,7 @@ public class GlobalGCCorrectionProfile {
                 if(Double.isNaN(correctedscore)){
                     correctedscore = 0.0d;
                 }
-                CorrectedRD.addHistogramData(rand, chr, chisto.getStart(n), chisto.getEnd(n), correctedscore);
+                CorrectedRD.addHistogramData(rand, chr, chisto.getStart(n), chisto.getEnd(n), correctedscore, chisto.getZero(n));
             }
             
             log.log(Level.INFO, "Completed correction of " + chr + " and now writing corrected RD histogram to tmp file");
