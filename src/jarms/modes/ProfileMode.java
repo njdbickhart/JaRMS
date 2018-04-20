@@ -5,10 +5,18 @@
  */
 package jarms.modes;
 
+import GetCmdOpt.ArrayModeCmdLineParser;
+import java.util.logging.Logger;
+
 /**
  *
  * @author desktop
  */
 public class ProfileMode {
+    private static final Logger log = Logger.getLogger(ProfileMode.class.getName());
+    private final ArrayModeCmdLineParser cmd;
     
+    public ProfileMode(ArrayModeCmdLineParser cmd){
+        this.cmd = cmd;
+    }
 }
