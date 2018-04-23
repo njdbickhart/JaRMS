@@ -13,6 +13,24 @@ import java.util.logging.Logger;
  */
 public class Mops {
     private static final Logger log = Logger.getLogger(Mops.class.getName());
-    private final double eps = 1e-100;
+    private final double eps = 1e-25;
+    private final SampleList list;
+    // I is the expected, normalized fold change from CN2. This can be modified for binning non-diploid species as well
+    private double I[] = {0.025,0.5,1,1.5,2,2.5,3,3.5,4.0};
+
+    private int cycles = 20;
     
+    
+    public Mops(SampleList list){
+        this.list = list;
+        
+    }
+    
+    public void EstimateSINI(){
+        // Calculate I/NI values for all chromosomes
+    }
+    
+    public void SegmentSINI(){
+        // Segment the I/NI calls and form into discrete classes
+    }
 }

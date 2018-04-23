@@ -5,6 +5,8 @@
 package stats;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -169,5 +171,25 @@ public class StdevAvg {
             ss += Math.pow(values[i] - average, 2.0d);
         }        
         return ss / (end - start);
+    }
+    
+    public static double getSum(double[] values){
+        return Arrays.stream(values).parallel().sum();
+    }
+    
+    public static double getMedian(List<Double> values){
+        Collections.sort(values);
+        if(values.size() % 2 == 0)
+            return ((double)values.get(values.size() / 2) + (double)values.get(values.size() / 2 - 1)) / 2;
+        else
+            return (double)values.get(values.size() / 2);
+    }
+    
+    public static double getMedian(double[] values){
+        Arrays.sort(values);
+        if(values.length % 2 == 0)
+            return ((double)values[values.length / 2] + (double)values[values.length/2 - 1])/2;
+        else
+            return (double)values[values.length / 2];
     }
 }

@@ -122,6 +122,10 @@ public class WindowPlan {
         }
     }
     
+    public int getNumBins(String chr){
+        return this.numBins.get(chr);
+    }
+    
     public Integer[] getStarts(String chr){
         return this.starts.get(chr);
     }
