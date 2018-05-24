@@ -192,4 +192,14 @@ public class StdevAvg {
         else
             return (double)values[values.length / 2];
     }
+    
+    public static double getMax(double[] values){
+        double max = Double.NEGATIVE_INFINITY;
+        for(int x = 0; x < values.length; x++)
+            max = (values[x] > max)? values[x] : max;
+        return max;
+    }
+    public static double getMax(double a, double b){
+        return (a > b)? a : b;
+    }
 }

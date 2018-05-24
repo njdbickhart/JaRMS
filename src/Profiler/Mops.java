@@ -5,6 +5,9 @@
  */
 package Profiler;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -13,7 +16,7 @@ import java.util.logging.Logger;
  */
 public class Mops {
     private static final Logger log = Logger.getLogger(Mops.class.getName());
-    private final double eps = 1e-25;
+    
     private final SampleList list;
     // I is the expected, normalized fold change from CN2. This can be modified for binning non-diploid species as well
     private double I[] = {0.025,0.5,1,1.5,2,2.5,3,3.5,4.0};
@@ -32,5 +35,9 @@ public class Mops {
     
     public void SegmentSINI(){
         // Segment the I/NI calls and form into discrete classes
+        // The goal here is to take sINI calls and push them into separate containers -- one for misassemblies and the other for WSSD
+        // INI negative windows are then noted and saved for incorporation into downstream pipelines
     }
+    
+    
 }

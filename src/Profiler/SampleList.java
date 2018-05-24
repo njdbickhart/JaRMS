@@ -8,6 +8,7 @@ package Profiler;
 import HistogramUtils.ChrHistogramFactory;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -20,16 +21,14 @@ import java.util.logging.Logger;
 public class SampleList {
     private static final Logger log = Logger.getLogger(SampleList.class.getName());
     private Map<String, ChrHistogramFactory> data;
-    private Path InputFiles;
+    private final List<String> sampleNames;
+    private List<Path> InputFiles;
     private String outBase;
     
-    public SampleList(String inputFiles, String outBase){
-        this.InputFiles = Paths.get(inputFiles);
-        if(!this.InputFiles.toFile().canRead()){
-            log.log(Level.SEVERE, "Error accessing input file list for generating profile!");
-            System.exit(-1);
-        }
+    public SampleList(List<Path> inputFiles, List<String> sampleNames, String outBase){
+        this.InputFiles = inputFiles;        
         this.outBase = outBase;
+        this.sampleNames = sampleNames;
     }
     
     public void ProcessFiles(){
