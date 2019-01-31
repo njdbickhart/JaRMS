@@ -25,7 +25,7 @@ import java.util.logging.Logger;
  * @author Derek.Bickhart
  */
 public class JaRMS {
-    private static final String version = "0.0.12";
+    private static final String version = "0.0.13";
     private static final Logger log = Logger.getLogger(JaRMS.class.getName());
     
     /**
@@ -85,11 +85,12 @@ public class JaRMS {
                 + "\t-f\tThe reference genome fasta file that was used during alignment of the bam file" + nl
                 + "\t-o\tOutput file prefix and directory" + nl
                 + "\t-t\tNumber of threads to use [optional: use one thread]" + nl
-                + "\t-w\tUse this window size [optional: determine from BAM read depth]" + nl,
-                "i-f:o:t:w:d|", 
+                + "\t-w\tUse this window size [optional: determine from BAM read depth]" + nl
+                + "\t-m\tMinimum chromosome size in bp [optional; limit chromosomes to 15 windows, minimum]" + nl,
+                "i-f:o:t:w:m:d|", 
                 "ifo", 
-                "ifotwd", 
-                "input", "fasta", "outbase", "threads", "window", "debug");
+                "ifotwmd", 
+                "input", "fasta", "outbase", "threads", "window", "min", "debug");
         
         cmd.AddMode("interpret", 
                 "JaRMS interpret mode" + nl +

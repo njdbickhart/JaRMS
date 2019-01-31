@@ -31,7 +31,7 @@ public class WindowPlan {
     private int windowSize;
     private long GenomeSize;
     
-    public void GenerateWindows(BamMetadataSampler bam, int OverrideWinSize){
+    public void GenerateWindows(BamMetadataSampler bam, int OverrideWinSize, int MinWinSize){
         this.GenomeSize = bam.chrLens.values().stream()
                 .reduce(0l, (a, b) -> a + b);
         
@@ -55,7 +55,7 @@ public class WindowPlan {
             }
         }
         
-        final List<String> exclude = new ArrayList<>();
+        //final List<String> exclude = new ArrayList<>();
         bam.chrOrder.stream().forEach((chr) -> {
             int binNums = 0;
             long chrlen = bam.chrLens.get(chr);
@@ -65,7 +65,7 @@ public class WindowPlan {
                 numIdx--;
             
             // If the number of windows is way too small to make any meaningful analysis, exclude the chromosome
-            if(numIdx < 15){
+            if(numIdx < 15 || chrlen < MinWinSize){
                 exclude.add(chr);
             }else{
                 

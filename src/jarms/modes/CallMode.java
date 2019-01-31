@@ -37,6 +37,7 @@ public class CallMode {
     private final List<String> bamFiles;
     private final String outDir;
     private final String fastaFile;
+    private final int MinWinSize;
     private int OverrideWinSize = -1;
     private int threads = 1;
 
@@ -68,6 +69,11 @@ public class CallMode {
         
         if(cmd.HasOpt("threads"))
             this.threads = Integer.parseInt(cmd.GetValue("threads"));
+        
+        if(cmd.HasOpt("min"))
+            this.MinWinSize = Integer.parseInt(cmd.GetValue("min"));
+        else
+            this.MinWinSize = -1;
     }
 
     public void run() {
@@ -77,7 +83,7 @@ public class CallMode {
         
         // Identify window plan
         WindowPlan wins = new WindowPlan();
-        wins.GenerateWindows(metadata, this.OverrideWinSize);
+        wins.GenerateWindows(metadata, this.OverrideWinSize, this.MinWinSize);
         
         //if(this.threads == 1)
             SingleThreadRun(metadata, wins);
